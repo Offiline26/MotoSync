@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.controller;
 
+import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.dto.RegistroDTO;
 import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.enums.TipoMovimentacao;
@@ -8,6 +9,7 @@ import br.com.fiap.apisecurity.service.RegistroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,39 +31,29 @@ public class RegistroController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<RegistroDTO>> getAllRegistros(Pageable pageable) {
-        return ResponseEntity.ok(registroService.readAllRegistros(pageable));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<RegistroDTO> getRegistroById(@PathVariable UUID id) {
-        RegistroDTO registroDTO = registroService.readRegistroById(id);
-        if (registroDTO == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(registroDTO);
+    public ResponseEntity<List<RegistroDTO>> getAll() {
+        return ResponseEntity.ok(registroService.readAll());
     }
 
     @GetMapping("/moto/{motoId}")
     public ResponseEntity<List<RegistroDTO>> getByMoto(@PathVariable UUID motoId) {
-        // Passa a entidade Moto para o serviço de Registro
-        Moto moto = motoService.readMotoById(motoId);  // Agora estamos usando a entidade Moto
-        if (moto == null) return ResponseEntity.notFound().build();  // Verifica se a moto foi encontrada
-
-        return ResponseEntity.ok(registroService.readByMoto(moto));  // Passa a entidade Moto
+        Moto moto = motoService.readMotoByIdEntity(motoId);
+        if (moto == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(registroService.readByMoto(moto));
     }
 
     @GetMapping("/moto/{motoId}/tipo/{tipo}")
     public ResponseEntity<List<RegistroDTO>> getByMotoAndTipo(@PathVariable UUID motoId, @PathVariable TipoMovimentacao tipo) {
-        // Passa a entidade Moto para o serviço de Registro
-        Moto moto = motoService.readMotoById(motoId);  // Agora estamos usando a entidade Moto
-        if (moto == null) return ResponseEntity.notFound().build();  // Verifica se a moto foi encontrada
-
-        return ResponseEntity.ok(registroService.readByMotoAndTipo(moto, tipo));  // Passa a entidade Moto
+        Moto moto = motoService.readMotoByIdEntity(motoId);
+        if (moto == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(registroService.readByMotoAndTipo(moto, tipo));
     }
 
     @GetMapping("/periodo")
     public ResponseEntity<List<RegistroDTO>> getByPeriodo(
-            @RequestParam("inicio") LocalDateTime inicio,
-            @RequestParam("fim") LocalDateTime fim
+            @RequestParam("inicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam("fim") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim
+
     ) {
         return ResponseEntity.ok(registroService.readByPeriodo(inicio, fim));
     }

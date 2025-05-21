@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.service;
 
+import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.dto.RegistroDTO;
 import br.com.fiap.apisecurity.mapper.RegistroMapper;
 import br.com.fiap.apisecurity.model.Moto;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class RegistroService {
@@ -40,21 +42,27 @@ public class RegistroService {
 
     // Read by ID
     @Cacheable(value = "registros", key = "#id")
-    public RegistroDTO readRegistroById(UUID id) {
-        Registro registro = registroRepository.findById(id).orElse(null);
-        return RegistroMapper.toDto(registro);
+    public List<RegistroDTO> readAll() {
+        return registroRepository.findAll()
+                .stream()
+                .map(RegistroMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     // Read by Moto
     public List<RegistroDTO> readByMoto(Moto moto) {
-        List<Registro> registros = registroRepository.findByMoto(moto);
-        return RegistroMapper.toDtoList(registros);
+        return registroRepository.findByMoto(moto)
+                .stream()
+                .map(RegistroMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     // Read by Tipo
     public List<RegistroDTO> readByMotoAndTipo(Moto moto, TipoMovimentacao tipo) {
-        List<Registro> registros = registroRepository.findByMotoAndTipo(moto, tipo);
-        return RegistroMapper.toDtoList(registros);
+        return registroRepository.findByMotoAndTipo(moto, tipo)
+                .stream()
+                .map(RegistroMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     // Read by Periodo

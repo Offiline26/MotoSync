@@ -6,6 +6,7 @@ import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.repository.MotoRepository;
 import br.com.fiap.apisecurity.repository.VagaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -51,11 +52,17 @@ public class MotoService {
 
     // Read by ID
     @Cacheable(value = "motos", key = "#id")
-    public Moto readMotoById(UUID id) {
-        Optional<Moto> moto = motoRepository.findById(id);
-        return moto.orElse(null);  // Retorna a entidade Moto
+    // Para Controller (GET por ID)
+    public MotoDTO readMotoById(UUID id) {
+        Moto moto = motoRepository.findById(id).orElse(null);
+        return (moto != null) ? MotoMapper.toDto(moto) : null;
     }
 
+    @Cacheable(value = "motos", key = "#id")
+    // Para RegistroService ou uso interno
+    public Moto readMotoByIdEntity(UUID id) {
+        return motoRepository.findById(id).orElse(null);
+    }
 
     // Read all
     @Cacheable(value = "motos", key = "#pageable")
