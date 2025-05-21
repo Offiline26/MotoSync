@@ -1,7 +1,7 @@
 package br.com.fiap.apisecurity.repository;
 import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.Registro;
-import br.com.fiap.apisecurity.model.TipoMovimentacao;
+import br.com.fiap.apisecurity.model.enums.TipoMovimentacao;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;

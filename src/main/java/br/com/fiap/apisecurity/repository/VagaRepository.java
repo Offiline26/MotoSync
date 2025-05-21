@@ -1,7 +1,7 @@
 package br.com.fiap.apisecurity.repository;
 import br.com.fiap.apisecurity.model.Patio;
 import br.com.fiap.apisecurity.model.Vaga;
-import br.com.fiap.apisecurity.model.StatusVaga;
+import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

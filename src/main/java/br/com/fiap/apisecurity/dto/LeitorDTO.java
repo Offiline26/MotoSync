@@ -1,6 +1,6 @@
 package br.com.fiap.apisecurity.dto;
 
-import br.com.fiap.apisecurity.model.TipoLeitor;
+import br.com.fiap.apisecurity.model.enums.TipoLeitor;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;

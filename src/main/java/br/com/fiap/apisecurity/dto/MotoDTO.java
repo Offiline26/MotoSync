@@ -1,6 +1,6 @@
 package br.com.fiap.apisecurity.dto;
 
-import br.com.fiap.apisecurity.model.StatusMoto;
+import br.com.fiap.apisecurity.model.enums.StatusMoto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -20,12 +20,15 @@ public class MotoDTO {
     @NotNull(message = "O status da moto é obrigatório")
     private StatusMoto status;
 
+    private UUID vagaId;
+
     public MotoDTO() {}
 
-    public MotoDTO(UUID id, String placa, StatusMoto status) {
+    public MotoDTO(UUID id, String placa, StatusMoto status, UUID vagaId) {
         this.id = id;
         this.placa = placa;
         this.status = status;
+        this.vagaId = vagaId;
     }
 
     public UUID getId() {
@@ -50,5 +53,13 @@ public class MotoDTO {
 
     public void setStatus(StatusMoto status) {
         this.status = status;
+    }
+
+    public UUID getVagaId() {
+        return vagaId;
+    }
+
+    public void setVagaId(UUID vagaId) {
+        this.vagaId = vagaId;
     }
 }

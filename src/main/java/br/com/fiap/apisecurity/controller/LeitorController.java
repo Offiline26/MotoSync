@@ -2,7 +2,7 @@ package br.com.fiap.apisecurity.controller;
 
 import br.com.fiap.apisecurity.dto.LeitorDTO;
 import br.com.fiap.apisecurity.model.Patio;
-import br.com.fiap.apisecurity.model.TipoLeitor;
+import br.com.fiap.apisecurity.model.enums.TipoLeitor;
 import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.service.LeitorService;
 import br.com.fiap.apisecurity.service.PatioService;

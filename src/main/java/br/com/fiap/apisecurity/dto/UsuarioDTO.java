@@ -1,6 +1,6 @@
 package br.com.fiap.apisecurity.dto;
 
-import br.com.fiap.apisecurity.model.CargoUsuario;
+import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,27 +13,30 @@ public class UsuarioDTO {
 
     private UUID id;
 
-    @NotBlank(message = "O nome é obrigatório")
-    private String nome;
-
-    @NotBlank(message = "O CPF é obrigatório")
-    @Size(min = 11, max = 11, message = "O CPF deve conter 11 dígitos")
-    private String cpf;
-
     @NotBlank(message = "O email é obrigatório")
     @Email(message = "Formato de email inválido")
     private String email;
+
+    @NotBlank
+    private String senha;
 
     @NotNull(message = "O cargo é obrigatório")
     private CargoUsuario cargo;
 
     public UsuarioDTO() {}
 
-    public UsuarioDTO(UUID id, String nome, String cpf, String email, CargoUsuario cargo) {
+    public String getSenha() {
+        return senha;
+    }
+
+    public void setSenha(String senha) {
+        this.senha = senha;
+    }
+
+    public UsuarioDTO(UUID id, String email, String senha, CargoUsuario cargo) {
         this.id = id;
-        this.nome = nome;
-        this.cpf = cpf;
         this.email = email;
+        this.senha = senha;
         this.cargo = cargo;
     }
 
@@ -45,22 +48,6 @@ public class UsuarioDTO {
 
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
     }
 
     public String getEmail() {

@@ -4,7 +4,7 @@ import br.com.fiap.apisecurity.dto.RegistroDTO;
 import br.com.fiap.apisecurity.mapper.RegistroMapper;
 import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.Registro;
-import br.com.fiap.apisecurity.model.TipoMovimentacao;
+import br.com.fiap.apisecurity.model.enums.TipoMovimentacao;
 import br.com.fiap.apisecurity.repository.RegistroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;

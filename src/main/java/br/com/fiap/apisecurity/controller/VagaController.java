@@ -2,7 +2,7 @@ package br.com.fiap.apisecurity.controller;
 
 import br.com.fiap.apisecurity.dto.VagaDTO;
 import br.com.fiap.apisecurity.mapper.VagaMapper;
-import br.com.fiap.apisecurity.model.StatusVaga;
+import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.service.PatioService;
 import br.com.fiap.apisecurity.service.VagaService;
@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 

@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.model;
 
+import br.com.fiap.apisecurity.model.enums.StatusSensor;
 import jakarta.persistence.*;
 import java.util.UUID;
 

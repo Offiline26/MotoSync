@@ -4,7 +4,7 @@ import br.com.fiap.apisecurity.dto.LeitorDTO;
 import br.com.fiap.apisecurity.mapper.LeitorMapper;
 import br.com.fiap.apisecurity.model.Leitor;
 import br.com.fiap.apisecurity.model.Patio;
-import br.com.fiap.apisecurity.model.TipoLeitor;
+import br.com.fiap.apisecurity.model.enums.TipoLeitor;
 import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.repository.LeitorRepository;
 import org.springframework.beans.factory.annotation.Autowired;

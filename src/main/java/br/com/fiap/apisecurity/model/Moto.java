@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.model;
 
+import br.com.fiap.apisecurity.model.enums.StatusMoto;
 import jakarta.persistence.*;
 import java.util.UUID;
 
@@ -17,6 +18,9 @@ public class Moto {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusMoto status;
+
+    @Column(name = "vaga_id")
+    private UUID vagaId;
 
     @OneToOne(mappedBy = "moto", cascade = CascadeType.ALL)
     private Sensor sensor;
@@ -50,6 +54,14 @@ public class Moto {
 
     public void setStatus(StatusMoto status) {
         this.status = status;
+    }
+
+    public UUID getVagaId() {
+        return vagaId;
+    }
+
+    public void setVagaId(UUID vagaId) {
+        this.vagaId = vagaId;
     }
 
     public Sensor getSensor() {

@@ -1,6 +1,6 @@
 package br.com.fiap.apisecurity.dto;
 
-import br.com.fiap.apisecurity.model.StatusVaga;
+import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -27,14 +27,17 @@ public class VagaDTO {
     @NotNull(message = "O ID do pátio é obrigatório")
     private UUID patioId;
 
+    private MotoDTO moto;
+
     public VagaDTO() {}
 
-    public VagaDTO(UUID id, double coordenadaLat, double coordenadaLong, StatusVaga status, UUID patioId) {
+    public VagaDTO(UUID id, double coordenadaLat, double coordenadaLong, StatusVaga status, UUID patioId, MotoDTO moto) {
         this.id = id;
         this.coordenadaLat = coordenadaLat;
         this.coordenadaLong = coordenadaLong;
         this.status = status;
         this.patioId = patioId;
+        this.moto = moto;
     }
 
     public UUID getId() {
@@ -75,5 +78,13 @@ public class VagaDTO {
 
     public void setPatioId(UUID patioId) {
         this.patioId = patioId;
+    }
+
+    public MotoDTO getMoto() {
+        return moto;
+    }
+
+    public void setMoto(MotoDTO moto) {
+        this.moto = moto;
     }
 }

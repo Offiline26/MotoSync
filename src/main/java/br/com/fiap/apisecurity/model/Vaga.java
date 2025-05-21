@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.model;
 
+import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import jakarta.persistence.*;
 import java.util.UUID;
 
@@ -11,25 +12,18 @@ public class Vaga {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private double coordenadaLat;
-    private double coordenadaLong;
+    private Double coordenadaLat;
+    private Double coordenadaLong;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private StatusVaga status;
 
     @ManyToOne
-    @JoinColumn(name = "patio_id", nullable = false)
     private Patio patio;
 
-    public Vaga() {}
-
-    public Vaga(double coordenadaLat, double coordenadaLong, StatusVaga status, Patio patio) {
-        this.coordenadaLat = coordenadaLat;
-        this.coordenadaLong = coordenadaLong;
-        this.status = status;
-        this.patio = patio;
-    }
+    @OneToOne
+    @JoinColumn(name = "moto_id")
+    private Moto moto;
 
     public UUID getId() {
         return id;
@@ -39,19 +33,19 @@ public class Vaga {
         this.id = id;
     }
 
-    public double getCoordenadaLat() {
+    public Double getCoordenadaLat() {
         return coordenadaLat;
     }
 
-    public void setCoordenadaLat(double coordenadaLat) {
+    public void setCoordenadaLat(Double coordenadaLat) {
         this.coordenadaLat = coordenadaLat;
     }
 
-    public double getCoordenadaLong() {
+    public Double getCoordenadaLong() {
         return coordenadaLong;
     }
 
-    public void setCoordenadaLong(double coordenadaLong) {
+    public void setCoordenadaLong(Double coordenadaLong) {
         this.coordenadaLong = coordenadaLong;
     }
 
@@ -69,5 +63,13 @@ public class Vaga {
 
     public void setPatio(Patio patio) {
         this.patio = patio;
+    }
+
+    public Moto getMoto() {
+        return moto;
+    }
+
+    public void setMoto(Moto moto) {
+        this.moto = moto;
     }
 }

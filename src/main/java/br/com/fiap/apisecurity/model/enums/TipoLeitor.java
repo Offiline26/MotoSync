@@ -1,4 +1,4 @@
-package br.com.fiap.apisecurity.model;
+package br.com.fiap.apisecurity.model.enums;
 
 public enum TipoLeitor {
     ENTRADA,

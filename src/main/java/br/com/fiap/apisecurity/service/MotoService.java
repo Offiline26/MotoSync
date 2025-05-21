@@ -3,7 +3,9 @@ package br.com.fiap.apisecurity.service;
 import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.mapper.MotoMapper;
 import br.com.fiap.apisecurity.model.Moto;
+import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.repository.MotoRepository;
+import br.com.fiap.apisecurity.repository.VagaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -22,9 +24,11 @@ import java.util.UUID;
 public class MotoService {
 
     private final MotoRepository motoRepository;
+    private final VagaRepository vagaRepository;
 
     @Autowired
-    public MotoService(MotoRepository motoRepository) {
+    public MotoService(MotoRepository motoRepository, VagaRepository vagaRepository) {
+        this.vagaRepository = vagaRepository;
         this.motoRepository = motoRepository;
     }
 
@@ -33,6 +37,15 @@ public class MotoService {
     @CachePut(value = "motos", key = "#result.id")
     public MotoDTO createMoto(MotoDTO motoDTO) {
         Moto moto = MotoMapper.toEntity(motoDTO);
+
+        // A associação com a Vaga é feita apenas por ID (vagaId no DTO)
+        if (motoDTO.getVagaId() != null) {
+            UUID vagaId = motoDTO.getVagaId();
+            Vaga vaga = vagaRepository.findById(vagaId)
+                    .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
+            moto.setVagaId(vaga.getId());
+        }
+
         return MotoMapper.toDto(motoRepository.save(moto));
     }
 

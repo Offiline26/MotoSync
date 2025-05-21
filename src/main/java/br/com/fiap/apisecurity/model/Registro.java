@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.model;
 
+import br.com.fiap.apisecurity.model.enums.TipoMovimentacao;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;

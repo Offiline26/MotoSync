@@ -2,8 +2,12 @@ package br.com.fiap.apisecurity.service;
 
 import br.com.fiap.apisecurity.dto.VagaDTO;
 import br.com.fiap.apisecurity.mapper.VagaMapper;
-import br.com.fiap.apisecurity.model.StatusVaga;
+import br.com.fiap.apisecurity.model.Moto;
+import br.com.fiap.apisecurity.model.Patio;
+import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import br.com.fiap.apisecurity.model.Vaga;
+import br.com.fiap.apisecurity.repository.MotoRepository;
+import br.com.fiap.apisecurity.repository.PatioRepository;
 import br.com.fiap.apisecurity.repository.VagaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,17 +25,35 @@ import java.util.UUID;
 public class VagaService {
 
     private final VagaRepository vagaRepository;
+    private final MotoRepository motoRepository;
+    private final PatioRepository patioRepository;
 
     @Autowired
-    public VagaService(VagaRepository vagaRepository) {
+    public VagaService(VagaRepository vagaRepository, MotoRepository motoRepository, PatioRepository patioRepository) {
         this.vagaRepository = vagaRepository;
+        this.motoRepository = motoRepository;
+        this.patioRepository = patioRepository;
     }
 
     // Create
     @Transactional
     public VagaDTO createVaga(VagaDTO vagaDTO) {
-        // Converte o DTO para a entidade
         Vaga vaga = VagaMapper.toEntity(vagaDTO);
+
+        // Associa a moto se o DTO tiver moto
+        if (vagaDTO.getMoto() != null && vagaDTO.getMoto().getId() != null) {
+            Moto moto = motoRepository.findById(vagaDTO.getMoto().getId())
+                    .orElseThrow(() -> new RuntimeException("Moto não encontrada"));
+            vaga.setMoto(moto);
+        }
+
+        // Aqui também associar o Patio, se necessário
+        if (vagaDTO.getPatioId() != null) {
+            Patio patio = patioRepository.findById(vagaDTO.getPatioId())
+                    .orElseThrow(() -> new RuntimeException("Pátio não encontrado"));
+            vaga.setPatio(patio);
+        }
+
         return VagaMapper.toDto(vagaRepository.save(vaga));
     }
 
@@ -56,10 +78,30 @@ public class VagaService {
     // Update
     @Transactional
     public VagaDTO updateVaga(UUID id, VagaDTO vagaDTO) {
-        Vaga vaga = VagaMapper.toEntity(vagaDTO);
-        vaga.setId(id);
+        Vaga vaga = vagaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
+
+        vaga.setCoordenadaLat(vagaDTO.getCoordenadaLat());
+        vaga.setCoordenadaLong(vagaDTO.getCoordenadaLong());
+        vaga.setStatus(vagaDTO.getStatus());
+
+        if (vagaDTO.getPatioId() != null) {
+            Patio patio = patioRepository.findById(vagaDTO.getPatioId())
+                    .orElseThrow(() -> new RuntimeException("Pátio não encontrado"));
+            vaga.setPatio(patio);
+        }
+
+        if (vagaDTO.getMoto() != null && vagaDTO.getMoto().getId() != null) {
+            Moto moto = motoRepository.findById(vagaDTO.getMoto().getId())
+                    .orElseThrow(() -> new RuntimeException("Moto não encontrada"));
+            vaga.setMoto(moto);
+        } else {
+            vaga.setMoto(null); // permite remover a moto da vaga
+        }
+
         return VagaMapper.toDto(vagaRepository.save(vaga));
     }
+
 
     // Delete
     @Transactional

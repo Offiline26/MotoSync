@@ -10,7 +10,6 @@ public final class VagaMapper {
 
     private VagaMapper() {}
 
-    // Converte de Entidade para DTO
     public static VagaDTO toDto(Vaga vaga) {
         if (vaga == null) return null;
         return new VagaDTO(
@@ -18,11 +17,11 @@ public final class VagaMapper {
                 vaga.getCoordenadaLat(),
                 vaga.getCoordenadaLong(),
                 vaga.getStatus(),
-                vaga.getPatio() != null ? vaga.getPatio().getId() : null
+                vaga.getPatio() != null ? vaga.getPatio().getId() : null,
+                MotoMapper.toDto(vaga.getMoto())
         );
     }
 
-    // Converte de DTO para Entidade
     public static Vaga toEntity(VagaDTO dto) {
         if (dto == null) return null;
         Vaga vaga = new Vaga();
@@ -30,11 +29,10 @@ public final class VagaMapper {
         vaga.setCoordenadaLat(dto.getCoordenadaLat());
         vaga.setCoordenadaLong(dto.getCoordenadaLong());
         vaga.setStatus(dto.getStatus());
-        // A associação de Pátio pode ser feita no Service ou Controller
+        // A associação de Patio e Moto deve ser feita no Service
         return vaga;
     }
 
-    // Converte uma lista de entidades para DTOs
     public static List<VagaDTO> toDtoList(List<Vaga> vagas) {
         return vagas.stream()
                 .map(VagaMapper::toDto)

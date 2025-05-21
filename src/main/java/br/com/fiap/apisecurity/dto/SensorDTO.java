@@ -1,6 +1,6 @@
 package br.com.fiap.apisecurity.dto;
 
-import br.com.fiap.apisecurity.model.StatusSensor;
+import br.com.fiap.apisecurity.model.enums.StatusSensor;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

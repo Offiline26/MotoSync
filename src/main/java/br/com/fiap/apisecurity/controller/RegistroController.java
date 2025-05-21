@@ -2,7 +2,7 @@ package br.com.fiap.apisecurity.controller;
 
 import br.com.fiap.apisecurity.dto.RegistroDTO;
 import br.com.fiap.apisecurity.model.Moto;
-import br.com.fiap.apisecurity.model.TipoMovimentacao;
+import br.com.fiap.apisecurity.model.enums.TipoMovimentacao;
 import br.com.fiap.apisecurity.service.MotoService;
 import br.com.fiap.apisecurity.service.RegistroService;
 import org.springframework.beans.factory.annotation.Autowired;

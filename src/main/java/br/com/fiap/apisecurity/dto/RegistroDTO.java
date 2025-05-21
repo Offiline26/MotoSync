@@ -1,6 +1,6 @@
 package br.com.fiap.apisecurity.dto;
 
-import br.com.fiap.apisecurity.model.TipoMovimentacao;
+import br.com.fiap.apisecurity.model.enums.TipoMovimentacao;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
