@@ -39,9 +39,14 @@ public class PatioService {
 
     // Read by ID
     @Cacheable(value = "patios", key = "#id")
-    public Patio readPatioById(UUID id) {
-        Optional<Patio> patio = patioRepository.findById(id);
-        return patio.orElse(null);  // Retorna a entidade Patio, não o DTO
+    public PatioDTO readPatioById(UUID id) {
+        return patioRepository.findById(id)
+                .map(PatioMapper::toDto)
+                .orElse(null);
+    }
+
+    public Patio readPatioEntityById(UUID id) {
+        return patioRepository.findById(id).orElse(null);
     }
 
     // Read by cidade

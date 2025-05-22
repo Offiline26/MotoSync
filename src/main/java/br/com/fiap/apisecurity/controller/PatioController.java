@@ -31,12 +31,8 @@ public class PatioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PatioDTO> getPatioById(@PathVariable UUID id) {
-        // Chama o serviço para pegar a entidade Patio, não o DTO
-        Patio patio = patioService.readPatioById(id);  // Agora estamos usando a entidade Patio
-        if (patio == null) return ResponseEntity.notFound().build();  // Verifica se a entidade foi encontrada
-
-        // Converte a entidade Patio para DTO antes de retornar a resposta
-        PatioDTO patioDTO = PatioMapper.toDto(patio);  // Converte para DTO
+        PatioDTO patioDTO = patioService.readPatioById(id); // sem conversão adicional
+        if (patioDTO == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(patioDTO);
     }
 

@@ -62,3 +62,4 @@ public class SensorDTO {
         this.motoId = motoId;
     }
 }
+

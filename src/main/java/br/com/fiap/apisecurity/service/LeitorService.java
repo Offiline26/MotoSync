@@ -26,17 +26,37 @@ import java.util.UUID;
 public class LeitorService {
 
     private final LeitorRepository leitorRepository;
+    private final PatioService patioService;
+    private final VagaService vagaService;
 
     @Autowired
-    public LeitorService(LeitorRepository leitorRepository) {
+    public LeitorService(LeitorRepository leitorRepository, PatioService patioService, VagaService vagaService) {
         this.leitorRepository = leitorRepository;
+        this.patioService = patioService;
+        this.vagaService = vagaService;
     }
 
     // Create
     @Transactional
     @CachePut(value = "leitores", key = "#result.id")
-    public LeitorDTO createLeitor(LeitorDTO leitorDTO) {
-        Leitor leitor = LeitorMapper.toEntity(leitorDTO);
+    public LeitorDTO createLeitor(LeitorDTO dto) {
+        Leitor leitor = new Leitor();
+
+        // Set tipo
+        leitor.setTipo(dto.getTipo());
+
+        // Buscar entidades
+        Patio patio = patioService.readPatioEntityById(dto.getPatioId());
+        Vaga vaga = vagaService.readVagaById(dto.getVagaId());
+
+        if (patio == null || vaga == null) {
+            throw new RuntimeException("Patio ou Vaga não encontrados.");
+        }
+
+        // Setar entidades no leitor
+        leitor.setPatio(patio);
+        leitor.setVaga(vaga);
+
         return LeitorMapper.toDto(leitorRepository.save(leitor));
     }
 
@@ -81,13 +101,26 @@ public class LeitorService {
     // Update
     @Transactional
     @CachePut(value = "leitores", key = "#result.id")
-    public LeitorDTO updateLeitor(UUID id, LeitorDTO leitorDTO) {
+    public LeitorDTO updateLeitor(UUID id, LeitorDTO dto) {
         Optional<Leitor> optionalLeitor = leitorRepository.findById(id);
-        if (optionalLeitor.isEmpty()) {
-            return null;
+        if (optionalLeitor.isEmpty()) return null;
+
+        Leitor leitor = optionalLeitor.get();
+
+        // Atualiza o tipo
+        leitor.setTipo(dto.getTipo());
+
+        // Recupera e atualiza as entidades Patio e Vaga
+        Patio patio = patioService.readPatioEntityById(dto.getPatioId());
+        Vaga vaga = vagaService.readVagaById(dto.getVagaId());
+
+        if (patio == null || vaga == null) {
+            throw new RuntimeException("Patio ou Vaga não encontrados.");
         }
-        Leitor leitor = LeitorMapper.toEntity(leitorDTO);
-        leitor.setId(id);
+
+        leitor.setPatio(patio);
+        leitor.setVaga(vaga);
+
         return LeitorMapper.toDto(leitorRepository.save(leitor));
     }
 

@@ -51,11 +51,9 @@ public class LeitorController {
 
     @GetMapping("/patio/{patioId}")
     public ResponseEntity<List<LeitorDTO>> getLeitoresByPatio(@PathVariable UUID patioId) {
-        // Retorna a entidade Patio diretamente
-        Patio patio = patioService.readPatioById(patioId);
+        Patio patio = patioService.readPatioEntityById(patioId); // agora correto
         if (patio == null) return ResponseEntity.notFound().build();
 
-        // Passa a entidade para o serviço e converte para DTO
         List<LeitorDTO> leitoresDTO = leitorService.readByPatio(patio);
         return ResponseEntity.ok(leitoresDTO);
     }
