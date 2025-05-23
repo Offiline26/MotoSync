@@ -129,8 +129,10 @@ Todos os endpoints estão prontos para serem testados via Postman. Você pode im
 ## 👨‍💻 Autores
 
 Projeto desenvolvido por :
-**Thiago Mendes** — RM 555352 ␣␣
-**Guilherme Gonçalves** - RM 555352␣␣
+**Thiago Mendes** — RM 555352
+
+**Guilherme Gonçalves** - RM 555352
+
 **Vinicius Banciela** - RM 558117
 
 ---
