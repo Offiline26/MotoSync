@@ -93,7 +93,7 @@ Durante essa fase de testes, um token JWT falso é gerado para permitir o acesso
 A autenticação é realizada via JWT (JSON Web Token), garantindo proteção aos endpoints privados.
 
 - Ao fazer login, um token JWT é gerado.
-- Esse token deve ser enviado no header `Authorization` em todas as requisições privadas.
+- Esse token deve ser enviado no header `Authorization` em todas as requisições privadas. Mas ja esta inserido por padrão para testes.
 
 ---
 
@@ -102,7 +102,7 @@ A autenticação é realizada via JWT (JSON Web Token), garantindo proteção ao
 1. Clone o projeto:
 
 ```bash
-git clone https://github.com/SeuUsuario/MotoSync-api-security.git
+git clone https://github.com/Offiline26/MotoSync-api-security.git
 cd MotoSync-api-security
 ```
 
