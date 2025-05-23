@@ -102,8 +102,8 @@ A autenticação é realizada via JWT (JSON Web Token), garantindo proteção ao
 1. Clone o projeto:
 
 ```bash
-git clone https://github.com/Offiline26/MotoSync-api-security.git
-cd MotoSync-api-security
+git clone https://github.com/Offiline26/MotoSync.git
+cd MotoSync
 ```
 
 2. Configure o application.properties para banco local (H2) ou externo (MySQL).
