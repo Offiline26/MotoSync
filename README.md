@@ -81,6 +81,13 @@ A aplicação resolve o problema da desorganização de motos nos pátios da emp
 
 ---
 
+### 👤 Autenticação Simulada
+
+O login do sistema é realizado automaticamente, sem necessidade de credenciais reais.
+Durante essa fase de testes, um token JWT falso é gerado para permitir o acesso às rotas autenticadas e facilitar os testes no Postman e na aplicação.
+
+---
+
 ## 🔐 Segurança com JWT
 
 A autenticação é realizada via JWT (JSON Web Token), garantindo proteção aos endpoints privados.
