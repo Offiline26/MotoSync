@@ -22,9 +22,6 @@ public class Moto {
     @Column(name = "vaga_id")
     private UUID vagaId;
 
-    @OneToOne(mappedBy = "moto", cascade = CascadeType.ALL)
-    private Sensor sensor;
-
     public Moto() {}
 
     public Moto(String placa, StatusMoto status) {
@@ -64,11 +61,4 @@ public class Moto {
         this.vagaId = vagaId;
     }
 
-    public Sensor getSensor() {
-        return sensor;
-    }
-
-    public void setSensor(Sensor sensor) {
-        this.sensor = sensor;
-    }
 }

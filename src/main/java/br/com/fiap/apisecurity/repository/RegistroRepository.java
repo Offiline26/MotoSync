@@ -18,7 +18,5 @@ public interface RegistroRepository extends JpaRepository<Registro, UUID> {
 
     // Buscar registros de um período
     List<Registro> findByDataHoraBetween(LocalDateTime inicio, LocalDateTime fim);
-
-
 }
 

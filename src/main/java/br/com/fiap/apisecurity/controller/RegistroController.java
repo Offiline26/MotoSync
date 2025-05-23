@@ -37,16 +37,12 @@ public class RegistroController {
 
     @GetMapping("/moto/{motoId}")
     public ResponseEntity<List<RegistroDTO>> getByMoto(@PathVariable UUID motoId) {
-        Moto moto = motoService.readMotoByIdEntity(motoId);
-        if (moto == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(registroService.readByMoto(moto));
+        return ResponseEntity.ok(registroService.readByMotoId(motoId));
     }
 
     @GetMapping("/moto/{motoId}/tipo/{tipo}")
     public ResponseEntity<List<RegistroDTO>> getByMotoAndTipo(@PathVariable UUID motoId, @PathVariable TipoMovimentacao tipo) {
-        Moto moto = motoService.readMotoByIdEntity(motoId);
-        if (moto == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(registroService.readByMotoAndTipo(moto, tipo));
+        return ResponseEntity.ok(registroService.readByMotoIdAndTipo(motoId, tipo));
     }
 
     @GetMapping("/periodo")

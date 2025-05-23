@@ -2,7 +2,10 @@ package br.com.fiap.apisecurity.mapper;
 
 
 import br.com.fiap.apisecurity.dto.RegistroDTO;
+import br.com.fiap.apisecurity.model.Leitor;
+import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.Registro;
+import br.com.fiap.apisecurity.model.Vaga;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,7 +20,6 @@ public final class RegistroMapper {
         return new RegistroDTO(
                 registro.getId(),
                 registro.getMoto() != null ? registro.getMoto().getId() : null,
-                registro.getSensor() != null ? registro.getSensor().getId() : null,
                 registro.getLeitor() != null ? registro.getLeitor().getId() : null,
                 registro.getTipo(),
                 registro.getDataHora()
@@ -25,13 +27,14 @@ public final class RegistroMapper {
     }
 
     // Converte de DTO para Entidade
-    public static Registro toEntity(RegistroDTO dto) {
+    public static Registro toEntity(RegistroDTO dto, Moto moto, Leitor leitor) {
         if (dto == null) return null;
         Registro registro = new Registro();
         registro.setId(dto.getId());
-        registro.setTipoMovimentacao(dto.getTipo());
         registro.setDataHora(dto.getDataHora());
-        // As associações de Moto, Sensor e Leitor devem ser feitas no Service ou Controller
+        registro.setTipo(dto.getTipo());
+        registro.setMoto(moto);
+        registro.setLeitor(leitor);
         return registro;
     }
 

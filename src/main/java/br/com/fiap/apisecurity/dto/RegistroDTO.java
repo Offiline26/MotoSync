@@ -13,9 +13,6 @@ public class RegistroDTO {
     @NotNull(message = "O ID da moto é obrigatório")
     private UUID motoId;
 
-    @NotNull(message = "O ID do sensor é obrigatório")
-    private UUID sensorId;
-
     @NotNull(message = "O ID do leitor é obrigatório")
     private UUID leitorId;
 
@@ -27,10 +24,9 @@ public class RegistroDTO {
 
     public RegistroDTO() {}
 
-    public RegistroDTO(UUID id, UUID motoId, UUID sensorId, UUID leitorId, TipoMovimentacao tipo, LocalDateTime dataHora) {
+    public RegistroDTO(UUID id, UUID motoId, UUID leitorId, TipoMovimentacao tipo, LocalDateTime dataHora) {
         this.id = id;
         this.motoId = motoId;
-        this.sensorId = sensorId;
         this.leitorId = leitorId;
         this.tipo = tipo;
         this.dataHora = dataHora;
@@ -50,14 +46,6 @@ public class RegistroDTO {
 
     public void setMotoId(UUID motoId) {
         this.motoId = motoId;
-    }
-
-    public UUID getSensorId() {
-        return sensorId;
-    }
-
-    public void setSensorId(UUID sensorId) {
-        this.sensorId = sensorId;
     }
 
     public UUID getLeitorId() {

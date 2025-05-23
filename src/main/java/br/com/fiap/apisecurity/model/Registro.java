@@ -18,10 +18,6 @@ public class Registro {
     private Moto moto;
 
     @ManyToOne
-    @JoinColumn(name = "sensor_id", nullable = false)
-    private Sensor sensor;
-
-    @ManyToOne
     @JoinColumn(name = "leitor_id", nullable = false)
     private Leitor leitor;
 
@@ -34,9 +30,8 @@ public class Registro {
 
     public Registro() {}
 
-    public Registro(Moto moto, Sensor sensor, Leitor leitor, TipoMovimentacao tipo, LocalDateTime dataHora) {
+    public Registro(Moto moto, Leitor leitor, TipoMovimentacao tipo, LocalDateTime dataHora) {
         this.moto = moto;
-        this.sensor = sensor;
         this.leitor = leitor;
         this.tipo = tipo;
         this.dataHora = dataHora;
@@ -58,14 +53,6 @@ public class Registro {
         this.moto = moto;
     }
 
-    public Sensor getSensor() {
-        return sensor;
-    }
-
-    public void setSensor(Sensor sensor) {
-        this.sensor = sensor;
-    }
-
     public Leitor getLeitor() {
         return leitor;
     }
@@ -78,7 +65,7 @@ public class Registro {
         return tipo;
     }
 
-    public void setTipoMovimentacao(TipoMovimentacao tipo) {
+    public void setTipo(TipoMovimentacao tipo) {
         this.tipo = tipo;
     }
 
