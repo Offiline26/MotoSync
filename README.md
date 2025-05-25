@@ -108,15 +108,7 @@ git clone https://github.com/Offiline26/MotoSync.git
 cd MotoSync
 ```
 
-2. Configure o application.properties para banco local (H2).
-
-3. Execute a aplicação:
-
-```bash
-./mvnw spring-boot:run
-```
-
-4. Use o Postman para testar os endpoints.
+2. Use o Postman para testar os endpoints.
 
 ---
 
@@ -132,7 +124,7 @@ Todos os endpoints estão prontos para serem testados via Postman. Você pode im
 Projeto desenvolvido por :
 **Thiago Mendes** — RM 555352
 
-**Guilherme Gonçalves** - RM 555352
+**Guilherme Gonçalves** - RM 558475
 
 **Vinicius Banciela** - RM 558117
 
