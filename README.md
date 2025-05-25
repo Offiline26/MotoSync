@@ -125,7 +125,7 @@ cd MotoSync
 Todos os endpoints estão prontos para serem testados via Postman. Você pode importar o seguinte JSON de coleção (gerado automaticamente no futuro).
 
 **Testes ja pré prontos no Body**
-
+**Link do WorkSpace no postman:** https://www.postman.com/telecoms-saganist-72325256/workspace/api-mottu/collection/39491755-36b595b3-3410-4e2d-ad20-0389be134c4d?action=share&creator=39491755
 ---
 
 ## 👨‍💻 Autores
