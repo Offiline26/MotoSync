@@ -67,7 +67,7 @@ A aplicação resolve o problema da desorganização de motos nos pátios da emp
 - `GET /leitores/vaga/{vagaId}/tipo/{tipo}`: Busca leitor por tipo e vaga
 - `POST /leitores`: Cadastra novo leitor
 
-**Campos:** `tipo` (ENTRADA ou SAÍDA), `vagaId`, `patioId`
+**Campos:** `tipo` (ENTRADA ou VAGA), `vagaId`, `patioId`
 
 ---
 
