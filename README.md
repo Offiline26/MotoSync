@@ -1,6 +1,6 @@
 # MotoSync API
 
-**LINK DO VIDEO**: [PRODUZINDO]
+**LINK DO VIDEO**: [[PRODUZINDO]](https://youtu.be/BCJ4cMwEo4Q)
 
 **MotoSync** é uma API RESTful desenvolvida em Java com Spring Boot para o gerenciamento inteligente de motos em pátios da empresa Mottu. Integrando tecnologias modernas e recursos de autenticação, o sistema permite organização e rastreamento das motos de forma segura, com integração com dispositivos IoT e um aplicativo mobile.
 
