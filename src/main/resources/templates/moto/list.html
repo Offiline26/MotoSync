@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head('Motos')}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+<main class="container" th:with="page=${motos != null ? motos : page}">
+    <div class="header">
+        <h1>Motos</h1>
+        <a class="btn" th:href="@{/motos/novo}">Nova moto</a>
+    </div>
+
+
+    <table class="table">
+        <thead>
+        <tr><th>Placa</th><th>Status</th><th>Vaga</th><th class="right">Ações</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${page?.content != null ? page.content : motos}">
+            <td th:text="${m.placa}">AAA-0000</td>
+            <td th:text="${m.status}">LIVRE</td>
+            <td th:text="${m.vagaId}">—</td>
+            <td class="right">
+                <a class="btn btn-sm" th:href="@{'/motos/' + ${m.id} + '/editar'}">Editar</a>
+                <form th:action="@{'/motos/' + ${m.id}}" method="post" class="inline">
+                    <input type="hidden" name="_method" value="delete" />
+                    <button class="btn btn-sm btn-danger" onclick="return confirm('Excluir?')">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+
+    <div class="pager" th:if="${page != null}">
+        <a th:classappend="${page.first}? 'disabled'"
+           th:href="@{/motos(page=${page.number-1},size=${page.size})}">«</a>
+        <span>página <span th:text="${page.number + 1}"></span>
+    de <span th:text="${page.totalPages}"></span></span>
+        <a th:classappend="${page.last}? 'disabled'"
+           th:href="@{/motos(page=${page.number+1},size=${page.size})}">»</a>
+    </div>
+
+</main>
+</body>
+</html>

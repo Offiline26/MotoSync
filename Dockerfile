@@ -5,5 +5,5 @@ COPY . .
 RUN gradle build
 FROM openjdk:21-jdk-slim
 COPY --from=BUILD /usr/app .
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT exec java -jar build/libs/api-security-0.0.1-SNAPSHOT.jar

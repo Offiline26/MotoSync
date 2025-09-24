@@ -29,15 +29,26 @@ public class VagaDTO {
 
     private MotoDTO moto;
 
+    private String identificacao;
+
     public VagaDTO() {}
 
-    public VagaDTO(UUID id, double coordenadaLat, double coordenadaLong, StatusVaga status, UUID patioId, MotoDTO moto) {
+    public VagaDTO(UUID id, double coordenadaLat, double coordenadaLong, StatusVaga status, UUID patioId, String identificacao,MotoDTO moto) {
         this.id = id;
         this.coordenadaLat = coordenadaLat;
         this.coordenadaLong = coordenadaLong;
         this.status = status;
         this.patioId = patioId;
+        this.identificacao = identificacao;
         this.moto = moto;
+    }
+
+    public String getIdentificacao() {
+        return identificacao;
+    }
+
+    public void setIdentificacao(String identificacao) {
+        this.identificacao = identificacao;
     }
 
     public UUID getId() {

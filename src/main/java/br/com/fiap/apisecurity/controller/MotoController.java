@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/motos")
+@RequestMapping("/api/motos")
 public class MotoController {
 
     private final MotoService motoService;

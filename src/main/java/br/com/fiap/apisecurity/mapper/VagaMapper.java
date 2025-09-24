@@ -18,6 +18,7 @@ public final class VagaMapper {
                 vaga.getCoordenadaLong(),
                 vaga.getStatus(),
                 vaga.getPatio() != null ? vaga.getPatio().getId() : null,
+                vaga.getIdentificacao(),
                 MotoMapper.toDto(vaga.getMoto())
         );
     }
@@ -29,7 +30,7 @@ public final class VagaMapper {
         vaga.setCoordenadaLat(dto.getCoordenadaLat());
         vaga.setCoordenadaLong(dto.getCoordenadaLong());
         vaga.setStatus(dto.getStatus());
-        // A associação de Patio e Moto deve ser feita no Service
+        vaga.setIdentificacao(dto.getIdentificacao());
         return vaga;
     }
 

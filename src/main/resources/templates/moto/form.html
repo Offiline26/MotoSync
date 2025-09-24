@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head(${moto?.id} != null ? 'Editar Moto' : 'Nova Moto')}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+<main class="container">
+  <h1 th:text="${moto?.id} != null ? 'Editar Moto' : 'Nova Moto'"></h1>
+  <form th:action="${moto?.id} != null ? @{'/motos/' + ${moto.id}} : @{/motos}" method="post">
+    <input type="hidden" name="_method" th:value="${moto?.id} != null ? 'put' : 'post'" />
+
+
+    <label>Placa
+      <input name="placa" required th:value="${moto?.placa}" placeholder="ABC-1D23" />
+    </label>
+
+
+    <label>Status
+      <select name="status" required>
+        <option th:each="s : ${T(br.com.fiap.apisecurity.model.enums.StatusMoto).values()}"
+                th:value="${s}" th:text="${s}"
+                th:selected="${moto != null} ? ${s} == ${moto.status} : false"></option>
+      </select>
+    </label>
+
+
+    <label>Vaga (ID)
+      <select name="vagaId">
+        <option value="" th:selected="${moto == null || moto.vagaId == null}">—</option>
+        <option th:each="v : ${vagas}"
+                th:value="${v.id}"
+                th:text="${v.id}"
+                th:selected="${moto != null} ? ${v.id} == ${moto.vagaId} : false"></option>
+      </select>
+    </label>
+
+
+    <div class="actions">
+      <a class="btn" th:href="@{/motos}">Voltar</a>
+      <button class="btn btn-primary">Salvar</button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

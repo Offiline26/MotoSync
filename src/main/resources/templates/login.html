@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/_head :: head('Login')"></head>
+<body>
+<header th:replace="fragments/_navbar :: navbar"></header>
+<main>
+    <h1>Acesso</h1>
+    <form th:action="@{/login}" method="post">
+        <div>
+            <label>Usuário</label>
+            <input type="text" name="username" />
+        </div>
+        <div>
+            <label>Senha</label>
+            <input type="password" name="password" />
+        </div>
+        <button type="submit">Entrar</button>
+    </form>
+</main>
+<footer th:replace="fragments/_footer :: footer"></footer>
+</body>
+</html>

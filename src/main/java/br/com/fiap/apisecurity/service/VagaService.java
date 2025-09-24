@@ -10,7 +10,9 @@ import br.com.fiap.apisecurity.repository.MotoRepository;
 import br.com.fiap.apisecurity.repository.PatioRepository;
 import br.com.fiap.apisecurity.repository.VagaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -37,17 +39,23 @@ public class VagaService {
 
     // Create
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "vagas",    allEntries = true),
+            @CacheEvict(cacheNames = "vagasAll", allEntries = true)
+    })
     public VagaDTO createVaga(VagaDTO vagaDTO) {
         Vaga vaga = VagaMapper.toEntity(vagaDTO);
 
-        // Associa a moto se o DTO tiver moto
+        if (vaga.getIdentificacao() != null) {
+            vaga.setIdentificacao(vaga.getIdentificacao().trim());
+        }
+
         if (vagaDTO.getMoto() != null && vagaDTO.getMoto().getId() != null) {
             Moto moto = motoRepository.findById(vagaDTO.getMoto().getId())
                     .orElseThrow(() -> new RuntimeException("Moto não encontrada"));
             vaga.setMoto(moto);
         }
 
-        // Aqui também associar o Patio, se necessário
         if (vagaDTO.getPatioId() != null) {
             Patio patio = patioRepository.findById(vagaDTO.getPatioId())
                     .orElseThrow(() -> new RuntimeException("Pátio não encontrado"));
@@ -57,15 +65,23 @@ public class VagaService {
         return VagaMapper.toDto(vagaRepository.save(vaga));
     }
 
-    // Read by ID
+    // Read by ID (entidade)
+    @Transactional(readOnly = true)
     public Vaga readVagaById(UUID id) {
         Optional<Vaga> vaga = vagaRepository.findById(id);
-        return vaga.orElse(null);  // Retorna a entidade Vaga
+        return vaga.orElse(null);
     }
 
-
-    // Read all
-    @Cacheable(value = "vagas", key = "#pageable")
+    // Read all (paginado) — só cacheia quando for paginado
+    @Transactional(readOnly = true)
+    @Cacheable(
+            cacheNames = "vagas",
+            condition  = "#pageable != null && #pageable.paged",
+            key        = "T(java.lang.String).format('%s_%s_%s', " +
+                    "#pageable.pageNumber, " +
+                    "#pageable.pageSize, " +
+                    "(#pageable.sort != null && #pageable.sort.sorted) ? #pageable.sort : 'UNSORTED')"
+    )
     public Page<VagaDTO> readAllVagas(Pageable pageable) {
         Page<Vaga> page = vagaRepository.findAll(pageable);
         List<VagaDTO> dtoList = page.getContent()
@@ -75,8 +91,22 @@ public class VagaService {
         return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 
+    // Read all (lista simples) — ideal para combos em formulários
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "vagasAll", key = "'ALL'")
+    public List<VagaDTO> readAllVagas() {
+        return vagaRepository.findAll()
+                .stream()
+                .map(VagaMapper::toDto)
+                .toList();
+    }
+
     // Update
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "vagas",    allEntries = true),
+            @CacheEvict(cacheNames = "vagasAll", allEntries = true)
+    })
     public VagaDTO updateVaga(UUID id, VagaDTO vagaDTO) {
         Vaga vaga = vagaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
@@ -84,6 +114,7 @@ public class VagaService {
         vaga.setCoordenadaLat(vagaDTO.getCoordenadaLat());
         vaga.setCoordenadaLong(vagaDTO.getCoordenadaLong());
         vaga.setStatus(vagaDTO.getStatus());
+        vaga.setIdentificacao(vagaDTO.getIdentificacao() != null ? vagaDTO.getIdentificacao().trim() : null);
 
         if (vagaDTO.getPatioId() != null) {
             Patio patio = patioRepository.findById(vagaDTO.getPatioId())
@@ -96,23 +127,26 @@ public class VagaService {
                     .orElseThrow(() -> new RuntimeException("Moto não encontrada"));
             vaga.setMoto(moto);
         } else {
-            vaga.setMoto(null); // permite remover a moto da vaga
+            vaga.setMoto(null);
         }
 
         return VagaMapper.toDto(vagaRepository.save(vaga));
     }
 
-
     // Delete
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "vagas",    allEntries = true),
+            @CacheEvict(cacheNames = "vagasAll", allEntries = true)
+    })
     public void deleteVaga(UUID id) {
         vagaRepository.deleteById(id);
     }
 
     // Read by Patio and Status
+    @Transactional(readOnly = true)
     public List<VagaDTO> readByPatioAndStatus(UUID patioId, StatusVaga status) {
-        // Aqui, você pode realizar a lógica de filtragem baseado no ID do Patio e Status
-        List<Vaga> vagas = vagaRepository.findByPatioIdAndStatus(patioId, status); // Alteração no código para usar o Patio ID
+        List<Vaga> vagas = vagaRepository.findByPatioIdAndStatus(patioId, status);
         return VagaMapper.toDtoList(vagas);
     }
 }

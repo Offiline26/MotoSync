@@ -2,6 +2,7 @@ package br.com.fiap.apisecurity.model.enums;
 
 public enum StatusMoto {
     DISPONIVEL,
-    MANUTENCAO,
-    INDISPONIVEL
+    EM_MANUTENCAO,
+    OCUPADA,
+    INATIVADA
 }

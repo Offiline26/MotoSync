@@ -15,6 +15,9 @@ public class Vaga {
     private Double coordenadaLat;
     private Double coordenadaLong;
 
+    @Column(name = "identificacao", length = 20)
+    private String identificacao;
+
     @Enumerated(EnumType.STRING)
     private StatusVaga status;
 
@@ -43,6 +46,14 @@ public class Vaga {
 
     public Double getCoordenadaLong() {
         return coordenadaLong;
+    }
+
+    public String getIdentificacao() {
+        return identificacao;
+    }
+
+    public void setIdentificacao(String identificacao) {
+        this.identificacao = identificacao;
     }
 
     public void setCoordenadaLong(Double coordenadaLong) {

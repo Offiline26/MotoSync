@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="pager(page, baseUrl)">
+<div class="pager" th:if="${page != null}">
+    <a th:classappend="${page.first}? 'disabled'"
+       th:href="@{${baseUrl}(page=${page.number-1},size=${page.size})}">«</a>
+    <span>página <span th:text="${page.number + 1}"></span>
+      de <span th:text="${page.totalPages}"></span></span>
+    <a th:classappend="${page.last}? 'disabled'"
+       th:href="@{${baseUrl}(page=${page.number+1},size=${page.size})}">»</a>
+</div>
+</body>
+</html>

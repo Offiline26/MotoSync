@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/patios")
+@RequestMapping("/api/patios")
 public class PatioController {
 
     private final PatioService patioService;

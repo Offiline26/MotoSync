@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/leitores")
+@RequestMapping("/api/leitores")
 public class LeitorController {
 
     private final LeitorService leitorService;

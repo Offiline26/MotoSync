@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/vagas")
+@RequestMapping("/api/vagas")
 public class VagaController {
 
     private final VagaService vagaService;

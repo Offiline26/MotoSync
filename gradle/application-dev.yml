@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      validation-timeout: 5000
+      idle-timeout: 60000
+      max-lifetime: 120000
+      keepalive-time: 30000
+      connection-test-query: SELECT 1 FROM DUAL

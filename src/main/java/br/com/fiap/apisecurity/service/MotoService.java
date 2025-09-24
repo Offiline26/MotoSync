@@ -4,6 +4,7 @@ import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.mapper.MotoMapper;
 import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.Vaga;
+import br.com.fiap.apisecurity.model.enums.StatusMoto;
 import br.com.fiap.apisecurity.repository.MotoRepository;
 import br.com.fiap.apisecurity.repository.VagaRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,13 +34,14 @@ public class MotoService {
         this.motoRepository = motoRepository;
     }
 
-    // Create
     @Transactional
-    @CachePut(value = "motos", key = "#result.id")
+    @Caching(
+            put   = { @CachePut(cacheNames = "motosById", key = "#result.id") },
+            evict = { @CacheEvict(cacheNames = "motosList", allEntries = true) }
+    )
     public MotoDTO createMoto(MotoDTO motoDTO) {
         Moto moto = MotoMapper.toEntity(motoDTO);
 
-        // A associação com a Vaga é feita apenas por ID (vagaId no DTO)
         if (motoDTO.getVagaId() != null) {
             UUID vagaId = motoDTO.getVagaId();
             Vaga vaga = vagaRepository.findById(vagaId)
@@ -51,23 +53,23 @@ public class MotoService {
     }
 
     // Read by ID
-    @Cacheable(value = "motos", key = "#id")
+    @Cacheable(cacheNames = "motosById", key = "#id")
     // Para Controller (GET por ID)
     public MotoDTO readMotoById(UUID id) {
         Moto moto = motoRepository.findById(id).orElse(null);
         return (moto != null) ? MotoMapper.toDto(moto) : null;
     }
 
-    @Cacheable(value = "motos", key = "#id")
+    @Cacheable(cacheNames = "motosById", key = "#id")
     // Para RegistroService ou uso interno
     public Moto readMotoByIdEntity(UUID id) {
         return motoRepository.findById(id).orElse(null);
     }
 
     // Read all
-    @Cacheable(value = "motos", key = "#pageable")
+    @Cacheable(cacheNames = "motosList", condition = "#pageable != null && #pageable.paged")
     public Page<MotoDTO> readAllMotos(Pageable pageable) {
-        Page<Moto> page = motoRepository.findAll(pageable);
+        Page<Moto> page = motoRepository.findByStatusNot(StatusMoto.INATIVADA, pageable);;
         List<MotoDTO> dtoList = page.getContent()
                 .stream()
                 .map(MotoMapper::toDto)
@@ -77,7 +79,10 @@ public class MotoService {
 
     // Update
     @Transactional
-    @CachePut(value = "motos", key = "#result.id")
+    @Caching(
+            put   = { @CachePut(cacheNames = "motosById", key = "#result.id") },
+            evict = { @CacheEvict(cacheNames = "motosList", allEntries = true) }
+    )
     public MotoDTO updateMoto(UUID id, MotoDTO motoDTO) {
         Moto moto = MotoMapper.toEntity(motoDTO);
         moto.setId(id);
@@ -86,14 +91,36 @@ public class MotoService {
 
     // Delete
     @Transactional
-    @CacheEvict(value = "motos", key = "#id")
+    @Caching(
+            evict = {
+                    @CacheEvict(cacheNames = "motosById", key = "#id"),
+                    @CacheEvict(cacheNames = "motosList", allEntries = true)
+            }
+    ) // limpa o cache da moto; a lista será recarregada
     public void deleteMoto(UUID id) {
-        motoRepository.deleteById(id);
+        Moto moto = motoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada"));
+
+        // Se a sua entidade armazena o ID da vaga:
+        UUID vagaId = moto.getVagaId();
+        if (vagaId != null) {
+            vagaRepository.findById(vagaId).ifPresent(v -> {
+                v.setMoto(null);
+                vagaRepository.save(v);
+            });
+            moto.setVagaId(null);
+        }
+
+        moto.setStatus(StatusMoto.INATIVADA);
+
+        motoRepository.save(moto);
     }
 
+
     public Moto readByPlaca(String placa) {
-        return motoRepository.findByPlaca(placa);
+        return motoRepository.findByPlacaIgnoreCase(placa);
     }
 }
+
 
 
