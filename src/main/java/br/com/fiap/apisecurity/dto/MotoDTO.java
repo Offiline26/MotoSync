@@ -22,6 +22,8 @@ public class MotoDTO {
 
     private UUID vagaId;
 
+    private String vagaIdentificacao;
+
     public MotoDTO() {}
 
     public MotoDTO(UUID id, String placa, StatusMoto status, UUID vagaId) {
@@ -29,6 +31,14 @@ public class MotoDTO {
         this.placa = placa;
         this.status = status;
         this.vagaId = vagaId;
+    }
+
+    public String getVagaIdentificacao() {
+        return vagaIdentificacao;
+    }
+
+    public void setVagaIdentificacao(String vagaIdentificacao) {
+        this.vagaIdentificacao = vagaIdentificacao;
     }
 
     public UUID getId() {

@@ -5,12 +5,16 @@
 <header th:replace="~{fragments/_navbar :: navbar}"></header>
 <main class="container">
   <h1 th:text="${moto?.id} != null ? 'Editar Moto' : 'Nova Moto'"></h1>
-  <form th:action="${moto?.id} != null ? @{'/motos/' + ${moto.id}} : @{/motos}" method="post">
-    <input type="hidden" name="_method" th:value="${moto?.id} != null ? 'put' : 'post'" />
+  <form th:action="${form != null and form.id != null} ? @{'/motos/' + ${form.id}} : @{/motos}" method="post">
+    <input type="hidden" name="_method" th:value="${form != null and form.id != null} ? 'PUT' : 'POST'"/>
 
 
     <label>Placa
-      <input name="placa" required th:value="${moto?.placa}" placeholder="ABC-1D23" />
+      <input name="placa"
+             required
+             placeholder="ABC1D23"
+             th:value="${form?.placa}"
+             th:readonly="${form != null and form.id != null}" />
     </label>
 
 
@@ -23,13 +27,14 @@
     </label>
 
 
-    <label>Vaga (ID)
+    <label>Vaga
       <select name="vagaId">
-        <option value="" th:selected="${moto == null || moto.vagaId == null}">—</option>
+        <option value="" th:selected="${form == null || form.vagaId == null}">—</option>
         <option th:each="v : ${vagas}"
                 th:value="${v.id}"
-                th:text="${v.id}"
-                th:selected="${moto != null} ? ${v.id} == ${moto.vagaId} : false"></option>
+                th:text="${v.identificacao}"
+                th:selected="${form != null and form.vagaId != null and v.id == form.vagaId}">
+        </option>
       </select>
     </label>
 

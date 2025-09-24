@@ -18,7 +18,8 @@
         <tr th:each="m : ${page?.content != null ? page.content : motos}">
             <td th:text="${m.placa}">AAA-0000</td>
             <td th:text="${m.status}">LIVRE</td>
-            <td th:text="${m.vagaId}">—</td>
+            <td th:text="${m.vagaIdentificacao != null ? m.vagaIdentificacao : '—'}">—<
+                th:title="${m.vagaId}">A01</td>
             <td class="right">
                 <a class="btn btn-sm" th:href="@{'/motos/' + ${m.id} + '/editar'}">Editar</a>
                 <form th:action="@{'/motos/' + ${m.id}}" method="post" class="inline">
