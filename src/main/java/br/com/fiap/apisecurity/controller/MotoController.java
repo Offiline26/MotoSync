@@ -3,7 +3,10 @@ package br.com.fiap.apisecurity.controller;
 import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.mapper.MotoMapper;
 import br.com.fiap.apisecurity.model.Moto;
+import br.com.fiap.apisecurity.model.enums.StatusVaga;
+import br.com.fiap.apisecurity.repository.MotoRepository;
 import br.com.fiap.apisecurity.service.MotoService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,8 +59,8 @@ public class MotoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMoto(@PathVariable UUID id) {
-        motoService.deleteMoto(id);
+    public ResponseEntity<Void> inativarMoto(@PathVariable UUID id) {
+        motoService.inativarMoto(id);
         return ResponseEntity.noContent().build();
     }
 }

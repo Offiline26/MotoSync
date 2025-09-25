@@ -44,29 +44,17 @@ public class MotoService {
             }
     )
     public MotoDTO createMoto(MotoDTO dto) {
-        Moto moto = MotoMapper.toEntity(dto);
-
-        if (dto.getVagaId() != null) {
-            // não deixa ocupar vaga já ocupada
-            if (motoRepository.existsByVagaId(dto.getVagaId())) {
-                throw new IllegalStateException("Vaga já está ocupada");
-            }
-            moto.setVagaId(dto.getVagaId());
+        if (dto.getVagaId() == null) {
+            throw new IllegalArgumentException("Selecione uma vaga para cadastrar a moto.");
         }
+        var moto = MotoMapper.toEntity(dto);
+        // primeiro salva a moto para ter o ID (se precisar)
+        moto = motoRepository.save(moto);
 
-        Moto saved = motoRepository.save(moto);
+        moverMotoDePara(moto, dto.getVagaId());
+        moto = motoRepository.save(moto);
 
-        // ATUALIZA TB_VAGA.MOTO_ID
-        if (saved.getVagaId() != null) {
-            Vaga vaga = vagaRepository.findById(saved.getVagaId())
-                    .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada"));
-            if (vaga.getMoto() != null) throw new IllegalStateException("Vaga já está ocupada");
-            vaga.setMoto(saved);
-            vaga.setStatus(StatusVaga.OCUPADA);
-            vagaRepository.save(vaga);
-        }
-
-        return MotoMapper.toDto(saved);
+        return MotoMapper.toDto(moto);
     }
 
     // Read by ID
@@ -130,45 +118,19 @@ public class MotoService {
             }
     )
     public MotoDTO updateMoto(UUID id, MotoDTO dto) {
-        Moto atual = motoRepository.findById(id)
+        Moto moto = motoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada"));
 
-        // placa não deve ser editável (mantém a atual)
-        // placa permanece a mesma (não editável)
-        atual.setStatus(dto.getStatus());
-
-        UUID novaVaga = dto.getVagaId();
-        UUID vagaAnterior = atual.getVagaId();
-
-        // mudou a vaga?
-        if (!Objects.equals(vagaAnterior, novaVaga)) {
-
-            // libera a vaga anterior
-            if (vagaAnterior != null) {
-                vagaRepository.findById(vagaAnterior).ifPresent(v -> {
-                    v.setMoto(null);
-                    v.setStatus(StatusVaga.LIVRE);
-                    vagaRepository.save(v);
-                });
-            }
-
-            // ocupa a nova vaga
-            if (novaVaga != null) {
-                Vaga vNova = vagaRepository.findById(novaVaga)
-                        .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada"));
-                if (vNova.getMoto() != null && !vNova.getMoto().getId().equals(id)) {
-                    throw new IllegalStateException("Vaga já está ocupada");
-                }
-                vNova.setMoto(atual);
-                vNova.setStatus(StatusVaga.OCUPADA);
-                vagaRepository.save(vNova);
-            }
-
-            atual.setVagaId(novaVaga);
+        if (dto.getStatus() == StatusMoto.INATIVADA) {
+            throw new IllegalArgumentException("Status INATIVADA só via exclusão.");
+        }
+        if (dto.getVagaId() == null) {
+            throw new IllegalArgumentException("Selecione uma vaga para a moto.");
         }
 
-        Moto salvo = motoRepository.save(atual);
-        return MotoMapper.toDto(salvo);
+        moverMotoDePara(moto, dto.getVagaId());  // garante ordem correta
+        moto.setStatus(dto.getStatus());
+        return MotoMapper.toDto(motoRepository.save(moto));
     }
 
     // Delete
@@ -180,13 +142,15 @@ public class MotoService {
                     @CacheEvict(cacheNames="motosListAtivas", allEntries=true)
             }
     ) // limpa o cache da moto; a lista será recarregada
-    public void deleteMoto(UUID id) {
-        Moto moto = motoRepository.findById(id)
+    public void inativarMoto(UUID id) {
+        var moto = motoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada"));
 
-        UUID vagaId = moto.getVagaId();
-        if (vagaId != null) {
-            vagaRepository.findById(vagaId).ifPresent(v -> {
+        UUID vagaAtualId = moto.getVagaId();
+
+        // solta a vaga atual (se houver)
+        if (vagaAtualId != null) {
+            vagaRepository.findById(vagaAtualId).ifPresent(v -> {
                 v.setMoto(null);
                 v.setStatus(StatusVaga.LIVRE);
                 vagaRepository.save(v);
@@ -194,6 +158,7 @@ public class MotoService {
             moto.setVagaId(null);
         }
 
+        // marca a moto como inativada
         moto.setStatus(StatusMoto.INATIVADA);
         motoRepository.save(moto);
     }
@@ -220,6 +185,47 @@ public class MotoService {
                     .map(Vaga::getIdentificacao).orElse(null);
         }
         return MotoMapper.toDto(moto, ident);
+    }
+
+    private void moverMotoDePara(Moto moto, UUID novaVagaId) {
+        UUID antigaId = moto.getVagaId();
+
+        // Se não mudou de vaga, só garante consistência
+        if (java.util.Objects.equals(antigaId, novaVagaId)) {
+            Vaga mesma = vagaRepository.findById(novaVagaId)
+                    .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada"));
+            if (mesma.getMoto() == null) {
+                mesma.setMoto(moto);
+                mesma.setStatus(StatusVaga.OCUPADA);
+                vagaRepository.save(mesma);
+            }
+            return;
+        }
+
+        // 1) Libera a vaga antiga e FLUSH (evita ORA-00001 na UNIQUE(moto_id))
+        if (antigaId != null) {
+            Vaga antiga = vagaRepository.findById(antigaId).orElse(null);
+            if (antiga != null && (antiga.getMoto() == null
+                    || antiga.getMoto().getId().equals(moto.getId()))) {
+                antiga.setMoto(null);
+                antiga.setStatus(StatusVaga.LIVRE);
+                vagaRepository.save(antiga);
+                vagaRepository.flush();   // <-- importante
+            }
+        }
+
+        // 2) Ocupa a nova
+        Vaga nova = vagaRepository.findById(novaVagaId)
+                .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada"));
+
+        if (nova.getMoto() != null && !nova.getMoto().getId().equals(moto.getId())) {
+            throw new IllegalStateException("Vaga já está ocupada.");
+        }
+        nova.setMoto(moto);
+        nova.setStatus(StatusVaga.OCUPADA);
+        vagaRepository.save(nova);
+
+        moto.setVagaId(nova.getId());
     }
 
 

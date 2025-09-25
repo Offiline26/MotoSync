@@ -12,10 +12,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -62,14 +65,14 @@ public class MotoViewController {
     @GetMapping("/novo")
     @PreAuthorize("hasRole('ADMIN')")
     public String novo(Model model) {
-        var form = new MotoDTO();
-        model.addAttribute("form", form);
+        var dto = new MotoDTO();
+        dto.setStatus(br.com.fiap.apisecurity.model.enums.StatusMoto.DISPONIVEL);
+        model.addAttribute("form", dto);
 
         var vagas = vagaService.readAllVagas(Pageable.unpaged()).getContent()
-                .stream()
-                .filter(v -> v.getMoto() == null) // só livres
-                .toList();
+                .stream().filter(v -> v.getMoto() == null).toList();
         model.addAttribute("vagas", vagas);
+
         return "moto/form";
     }
 
@@ -82,31 +85,49 @@ public class MotoViewController {
 
     @GetMapping("/{id}/editar")
     @PreAuthorize("hasRole('ADMIN')")
-    public String editar(@PathVariable UUID id, Model model) {
+    public String editar(@PathVariable UUID id, Model model, RedirectAttributes ra) {
+
         var form = motoService.readMotoById(id);
-        model.addAttribute("form", form);
+        if (form == null) { ra.addFlashAttribute("error","Moto não encontrada"); return "redirect:/motos"; }
 
         var todas = vagaService.readAllVagas(Pageable.unpaged()).getContent();
+        var vagaAtualId = form.getVagaId();
         var vagas = todas.stream()
-                // mostra livres OU a própria vaga da moto (para não “sumir” no combo)
-                .filter(v -> v.getMoto() == null || v.getId().equals(form.getVagaId()))
+                .filter(v -> v.getMoto() == null || java.util.Objects.equals(v.getId(), vagaAtualId))
+                .sorted(java.util.Comparator.comparing(v -> java.util.Optional.ofNullable(v.getIdentificacao()).orElse(v.getId().toString())))
                 .toList();
 
+        model.addAttribute("form", form);
         model.addAttribute("vagas", vagas);
         return "moto/form";
-
     }
 
-    @PostMapping("/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public String atualizarOuExcluir(@PathVariable UUID id,
-                                     @RequestParam(name = "_method", required = false) String method,
-                                     @ModelAttribute("form") MotoDTO form) {
-        if ("delete".equalsIgnoreCase(method)) {
-            motoService.deleteMoto(id);
-        } else if ("put".equalsIgnoreCase(method)) {
+    public String atualizar(@PathVariable UUID id,
+                            @ModelAttribute("form") MotoDTO form,
+                            RedirectAttributes ra) {
+        try {
             motoService.updateMoto(id, form);
+            ra.addFlashAttribute("ok", "Moto atualizada.");
+            return "redirect:/motos";
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/motos/" + id + "/editar";
         }
-        return "redirect:/motos";
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public RedirectView excluir(@PathVariable UUID id, RedirectAttributes ra) {
+        try {
+            motoService.inativarMoto(id); // libera vaga + INATIVADA
+            ra.addFlashAttribute("ok", "Moto inativada.");
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        RedirectView rv = new RedirectView("/motos", true);
+        rv.setStatusCode(HttpStatus.SEE_OTHER); // 303 PRG “duro”
+        return rv;
     }
 }
