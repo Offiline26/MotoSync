@@ -4,10 +4,11 @@ import br.com.fiap.apisecurity.dto.PatioDTO;
 import br.com.fiap.apisecurity.mapper.PatioMapper;
 import br.com.fiap.apisecurity.model.Patio;
 import br.com.fiap.apisecurity.repository.PatioRepository;
+import br.com.fiap.apisecurity.repository.VagaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,23 +23,25 @@ import java.util.UUID;
 public class PatioService {
 
     private final PatioRepository patioRepository;
+    private final VagaRepository vagaRepository;
 
     @Autowired
-    public PatioService(PatioRepository patioRepository) {
+    public PatioService(PatioRepository patioRepository, VagaRepository vagaRepository) {
         this.patioRepository = patioRepository;
+        this.vagaRepository = vagaRepository;
     }
 
 
     // Create
     @Transactional
-    @CachePut(value = "patios", key = "#result.id")
+    @CacheEvict(value = "patios:list", allEntries = true)
     public PatioDTO createPatio(PatioDTO patioDTO) {
         Patio patio = PatioMapper.toEntity(patioDTO);
         return PatioMapper.toDto(patioRepository.save(patio));
     }
 
     // Read by ID
-    @Cacheable(value = "patios", key = "#id")
+    @Cacheable(value = "patios:item", key = "#id")
     public PatioDTO readPatioById(UUID id) {
         return patioRepository.findById(id)
                 .map(PatioMapper::toDto)
@@ -62,7 +65,11 @@ public class PatioService {
     }
 
     // Read all
-    @Cacheable(value = "patios", key = "#pageable")
+    @Cacheable(
+            cacheNames = "patios:list",
+            condition  = "#pageable != null && #pageable.isPaged()",
+            key        = "#pageable"
+    )
     public Page<PatioDTO> readAllPatios(Pageable pageable) {
         Page<Patio> page = patioRepository.findAll(pageable);
         List<PatioDTO> dtoList = page.getContent()
@@ -74,7 +81,10 @@ public class PatioService {
 
     // Update
     @Transactional
-    @CachePut(value = "patios", key = "#result.id")
+    @Caching(evict = {
+            @CacheEvict(value = "patios:item", key = "#id"),
+            @CacheEvict(value = "patios:list", allEntries = true)
+    })
     public PatioDTO updatePatio(UUID id, PatioDTO patioDTO) {
         Patio patio = PatioMapper.toEntity(patioDTO);
         patio.setId(id);
@@ -83,9 +93,23 @@ public class PatioService {
 
     // Delete
     @Transactional
-    @CacheEvict(value = "patios", key = "#id")
-    public void deletePatio(UUID id) {
-        patioRepository.deleteById(id);
+    @Caching(evict = {
+            @CacheEvict(value = "patios:item", key = "#id"),
+            @CacheEvict(value = "patios:list", allEntries = true)
+    })
+    public void inativarPatio(UUID id) {
+        var patio = patioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pátio não encontrado."));
+
+        long qtdVagas = vagaRepository.countByPatioId(id);
+        if (qtdVagas > 0) {
+            throw new IllegalStateException(
+                    "Não é possível inativar este pátio: existem " + qtdVagas +
+                            " vaga(s) vinculada(s). Remova as vagas antes de prosseguir."
+            );
+        }
+
+        patioRepository.delete(patio);
     }
 }
 

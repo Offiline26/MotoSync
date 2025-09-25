@@ -76,11 +76,8 @@ public class VagaService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = "vagas",
-            condition  = "#pageable != null && #pageable.paged",
-            key        = "T(java.lang.String).format('%s_%s_%s', " +
-                    "#pageable.pageNumber, " +
-                    "#pageable.pageSize, " +
-                    "(#pageable.sort != null && #pageable.sort.sorted) ? #pageable.sort : 'UNSORTED')"
+            condition  = "#pageable != null && #pageable.isPaged()",
+            key        = "#pageable"
     )
     public Page<VagaDTO> readAllVagas(Pageable pageable) {
         Page<Vaga> page = vagaRepository.findAll(pageable);

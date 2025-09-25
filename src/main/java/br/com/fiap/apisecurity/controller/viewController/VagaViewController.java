@@ -14,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.UUID;
 
 @Controller
@@ -55,16 +57,28 @@ public class VagaViewController {
     @GetMapping("/novo")
     @PreAuthorize("hasRole('ADMIN')")
     public String novo(Model model) {
-        model.addAttribute("form", new VagaDTO());
-        model.addAttribute("patios", patioService.readAllPatios(Pageable.unpaged()).getContent());
+        var dto = new VagaDTO();
+        model.addAttribute("form", dto);
+
+        // carrega pátios para o select, ordenados por nome (ou id se nome for null)
+        var patios = patioService.readAllPatios(Pageable.unpaged()).getContent()
+                .stream()
+                .sorted(Comparator.comparing(p -> Optional.ofNullable(p.getNome())
+                        .orElse(p.getId().toString())))
+                .toList();
+        model.addAttribute("patios", patios);
+
+        model.asMap().remove("page");
         return "vaga/form";
     }
 
 
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public String criar(VagaDTO form) {
+    public String criar(@ModelAttribute("form") VagaDTO form, RedirectAttributes ra) {
         vagaService.createVaga(form);
+        ra.addFlashAttribute("ok", "Vaga criada.");
         return "redirect:/vagas";
     }
 
@@ -74,6 +88,8 @@ public class VagaViewController {
     public String editar(@PathVariable UUID id, Model model) {
         model.addAttribute("form", br.com.fiap.apisecurity.mapper.VagaMapper.toDto(vagaService.readVagaById(id)));
         model.addAttribute("patios", patioService.readAllPatios(Pageable.unpaged()).getContent());
+        model.asMap().remove("page");
+
         return "vaga/form";
     }
 

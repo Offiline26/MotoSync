@@ -5,10 +5,16 @@
 <header th:replace="~{fragments/_navbar :: navbar}"></header>
 
 <main class="container" th:with="isEdit=${form != null and form.id != null}">
-  <h1 th:text="${isEdit} ? 'Editar Vaga' : 'Nova Vaga'"></h1>
+  <div class="header">
+    <h1 th:text="${isEdit} ? 'Editar Vaga' : 'Nova Vaga'"></h1>
+    <a class="btn" th:href="@{/vagas}">Voltar</a>
+  </div>
+
+  <div th:if="${error}" class="alert danger" th:text="${error}"></div>
 
   <!-- /vagas (POST) cria | /vagas/{id} (POST + _method=put) edita -->
-  <form th:action="${isEdit} ? @{/vagas/{id}(id=${form.id})} : @{/vagas}" method="post" th:object="${form}">
+  <form th:action="${isEdit} ? @{/vagas/{id}(id=${form.id})} : @{/vagas}"
+        method="post" th:object="${form}">
     <input type="hidden" name="_method" th:if="${isEdit}" value="put"/>
     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
@@ -19,15 +25,13 @@
     <label>Pátio
       <select th:field="*{patioId}" required>
         <option value="" th:if="${!isEdit}" selected>—</option>
-        <option th:each="p : ${patios}"
-                th:value="${p.id}"
+        <option th:each="p : ${patios}" th:value="${p.id}"
                 th:text="${p.nome != null ? p.nome : p.id}">
         </option>
       </select>
     </label>
 
     <div class="actions">
-      <a class="btn" th:href="@{/vagas}">Voltar</a>
       <button class="btn btn-primary" type="submit">Salvar</button>
     </div>
   </form>

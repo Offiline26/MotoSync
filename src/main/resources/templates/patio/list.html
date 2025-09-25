@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head('Pátios')}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container"
+      th:with="
+        pg=${page != null ? page : null},
+        rows=${pg != null ? pg.content : patios}
+      ">
+    <div class="header">
+        <h1>Pátios</h1>
+        <a class="btn" th:href="@{/patios/novo}">Novo pátio</a>
+    </div>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Endereço</th>
+            <th>Cidade/UF</th>
+            <th>País</th>
+            <th class="right">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="p : ${rows}">
+            <td th:text="${p.nome}">Pátio Central</td>
+            <td>
+                <span th:text="${p.rua}">Rua</span>,
+                <span th:text="${p.numero}">123</span>
+                <span th:if="${p.bairro != null and !#strings.isEmpty(p.bairro)}"> — <span th:text="${p.bairro}">Centro</span></span>
+            </td>
+            <td><span th:text="${p.cidade}">São Paulo</span> / <span th:text="${p.estado}">SP</span></td>
+            <td th:text="${p.pais}">Brasil</td>
+
+            <td class="right">
+                <a th:href="@{'/patios/' + ${p.id} + '/editar'}">Editar</a>
+
+                <!-- POST + _method=delete -->
+                <form th:action="@{'/patios/' + ${p.id}}" method="post"
+                      th:attr="data-nome=${p.nome}"
+                      onsubmit="return confirm('Excluir o pátio ' + this.dataset.nome + '?')"
+                      style="display:inline-block;margin-left:.5rem">
+                    <input type="hidden" name="_method" value="delete"/>
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn danger">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <script th:if="${error}" th:inline="javascript">
+        alert(/*[[${error}]]*/ 'Ocorreu um erro.');
+    </script>
+
+    <!-- paginação sempre visível quando houver Page -->
+    <div class="pager" th:if="${pg != null}">
+        <a th:classappend="${pg.first} ? 'disabled'" th:href="@{/patios(page=${pg.number - 1}, size=${pg.size})}">«</a>
+        <span>página <span th:text="${pg.number + 1}">1</span> de <span th:text="${pg.totalPages}">1</span></span>
+        <a th:classappend="${pg.last} ? 'disabled'" th:href="@{/patios(page=${pg.number + 1}, size=${pg.size})}">»</a>
+    </div>
+</main>
+</body>
+</html>

@@ -3,9 +3,9 @@
 <body th:fragment="navbar">
 <nav class="nav">
   <a class="brand" th:href="@{/}">APISecurity</a>
-  <a th:href="@{/motos}">Motos</a>
-  <a th:href="@{/vagas}">Vagas</a>
-  <a th:href="@{/patios}">Pátios</a>
+  <a th:href="${p != null} ? @{/motos(page=${p.number}, size=${p.size})} : @{/motos}">Motos</a>
+  <a th:href="${p != null} ? @{/vagas(page=${p.number}, size=${p.size})} : @{/vagas}">Vagas</a>
+  <a th:href="${p != null} ? @{/patios(page=${p.number}, size=${p.size})} : @{/patios}">Pátios</a>
   <a th:href="@{/leitores}">Leitores</a>
   <a th:href="@{/registros}">Registros</a>
 </nav>

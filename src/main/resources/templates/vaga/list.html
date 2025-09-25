@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/_head :: head('Vagas')}"></head>
+<head th:replace="~{fragments/_head :: head('Vagas')}"></head>   <!-- <<< AQUI -->
 <body>
 <header th:replace="~{fragments/_navbar :: navbar}"></header>
 
@@ -9,10 +9,14 @@
         pg=${page != null ? page : null},
         rows=${pg != null ? pg.content : vagas}
       ">
+
   <div class="header">
     <h1>Vagas</h1>
     <a class="btn" th:href="@{/vagas/novo}">Nova vaga</a>
   </div>
+
+  <div th:if="${ok}" class="alert success" th:text="${ok}"></div>
+  <div th:if="${error}" class="alert danger" th:text="${error}"></div>
 
   <table class="table">
     <thead>
@@ -24,17 +28,15 @@
     </thead>
 
     <tbody>
-    <tr th:each="v : ${page != null ? page.content : vagas}">
+    <tr th:each="v : ${rows}">
       <td th:text="${v.identificacao != null ? v.identificacao : '—'}">—</td>
-
-      <!-- Mostra nome do pátio se existir; title com UUID do pátio -->
       <td th:text="${v.patioNome != null ? v.patioNome : (v.patioId != null ? v.patioId : '—')}"
           th:title="${v.patioId}">—</td>
 
       <td class="right">
         <a th:href="@{'/vagas/' + ${v.id} + '/editar'}">Editar</a>
 
-        <!-- POST + _method=delete (HiddenHttpMethodFilter converte para DELETE) -->
+        <!-- POST + _method=delete -->
         <form th:action="@{'/vagas/' + ${v.id}}" method="post"
               th:attr="data-ident=${v.identificacao != null ? v.identificacao : 'esta vaga'}"
               onsubmit="return confirm('Excluir ' + this.dataset.ident + '?')"
@@ -50,14 +52,9 @@
 
   <!-- paginação só quando existe Page -->
   <div class="pager" th:if="${pg != null}">
-    <a th:classappend="${pg.first} ? 'disabled'"
-       th:href="@{/vagas(page=${pg.number - 1}, size=${pg.size}, sort=${sortParams})}">«</a>
-
-    <span>página <span th:text="${pg.number + 1}">1</span>
-    de <span th:text="${pg.totalPages}">1</span></span>
-
-    <a th:classappend="${pg.last} ? 'disabled'"
-       th:href="@{/vagas(page=${pg.number + 1}, size=${pg.size}, sort=${sortParams})}">»</a>
+    <a th:classappend="${pg.first} ? 'disabled'" th:href="@{/vagas(page=${pg.number - 1}, size=${pg.size})}">«</a>
+    <span>página <span th:text="${pg.number + 1}">1</span> de <span th:text="${pg.totalPages}">1</span></span>
+    <a th:classappend="${pg.last} ? 'disabled'" th:href="@{/vagas(page=${pg.number + 1}, size=${pg.size})}">»</a>
   </div>
 </main>
 </body>

@@ -23,6 +23,8 @@ public interface VagaRepository extends JpaRepository<Vaga, UUID> {
     // se houver algo como findByPatioIdAndNomeContainingIgnoreCase, ajuste:
     Page<Vaga> findByPatioId(UUID patioId, Pageable pageable); // exemplo
 
+    long countByPatioId(UUID patioId);
+
     @Modifying
     @Query("update Vaga v set v.moto = null, v.status = br.com.fiap.apisecurity.model.enums.StatusVaga.LIVRE where v.moto.id = :motoId")
     int liberarPorMotoId(UUID motoId);
