@@ -1,13 +1,10 @@
 package br.com.fiap.apisecurity.controller.viewController;
 
 import br.com.fiap.apisecurity.dto.MotoDTO;
-import br.com.fiap.apisecurity.mapper.MotoMapper;
-import br.com.fiap.apisecurity.model.enums.StatusMoto;
-import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import br.com.fiap.apisecurity.service.MotoService;
 import br.com.fiap.apisecurity.service.PatioService;
 import br.com.fiap.apisecurity.service.VagaService;
-import org.springframework.data.domain.Page;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +18,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.UUID;
 
 @Controller
@@ -44,7 +40,13 @@ public class MotoViewController {
     public String list(@RequestParam(required = false) String placa,
                        @RequestParam(defaultValue = "false") boolean mostrarInativas,
                        @PageableDefault(size = 10, sort = "placa") Pageable pageable,
-                       Model model) {
+                       Model model,
+                       HttpServletResponse resp) {
+
+        resp.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+        resp.addHeader("Cache-Control", "post-check=0, pre-check=0"); // legacy compat
+        resp.setHeader("Pragma", "no-cache");
+        resp.setDateHeader("Expires", 0);
 
         if (placa != null && !placa.isBlank()) {
             var dto = motoService.readByPlacaDto(placa);

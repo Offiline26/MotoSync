@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head('Vagas')}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container"
+      th:with="
+        pg=${page != null ? page : null},
+        rows=${pg != null ? pg.content : vagas}
+      ">
+  <div class="header">
+    <h1>Vagas</h1>
+    <a class="btn" th:href="@{/vagas/novo}">Nova vaga</a>
+  </div>
+
+  <table class="table">
+    <thead>
+    <tr>
+      <th>Identificação</th>
+      <th>Pátio</th>
+      <th class="right">Ações</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="v : ${page != null ? page.content : vagas}">
+      <td th:text="${v.identificacao != null ? v.identificacao : '—'}">—</td>
+
+      <!-- Mostra nome do pátio se existir; title com UUID do pátio -->
+      <td th:text="${v.patioNome != null ? v.patioNome : (v.patioId != null ? v.patioId : '—')}"
+          th:title="${v.patioId}">—</td>
+
+      <td class="right">
+        <a th:href="@{'/vagas/' + ${v.id} + '/editar'}">Editar</a>
+
+        <!-- POST + _method=delete (HiddenHttpMethodFilter converte para DELETE) -->
+        <form th:action="@{'/vagas/' + ${v.id}}" method="post"
+              th:attr="data-ident=${v.identificacao != null ? v.identificacao : 'esta vaga'}"
+              onsubmit="return confirm('Excluir ' + this.dataset.ident + '?')"
+              style="display:inline-block; margin-left:.5rem;">
+          <input type="hidden" name="_method" value="delete"/>
+          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit" class="btn danger">Excluir</button>
+        </form>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <!-- paginação só quando existe Page -->
+  <div class="pager" th:if="${pg != null}">
+    <a th:classappend="${pg.first} ? 'disabled'"
+       th:href="@{/vagas(page=${pg.number - 1}, size=${pg.size}, sort=${sortParams})}">«</a>
+
+    <span>página <span th:text="${pg.number + 1}">1</span>
+    de <span th:text="${pg.totalPages}">1</span></span>
+
+    <a th:classappend="${pg.last} ? 'disabled'"
+       th:href="@{/vagas(page=${pg.number + 1}, size=${pg.size}, sort=${sortParams})}">»</a>
+  </div>
+</main>
+</body>
+</html>
