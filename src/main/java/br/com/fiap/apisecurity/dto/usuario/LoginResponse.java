@@ -2,24 +2,41 @@ package br.com.fiap.apisecurity.dto.usuario;
 
 import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 
+import java.util.UUID;
+
 public class LoginResponse {
 
-    private String token;
-    private Integer idUsuario;
-    private CargoUsuario cargo; // NOVO
+    private String idUsuario;         // UUID como string
+    private String email;
+    private CargoUsuario cargo;
 
-    public LoginResponse(String token, Integer idUsuario, CargoUsuario cargo) {
-        this.token = token;
+    public LoginResponse(String idUsuario, String email, CargoUsuario cargo) {
         this.idUsuario = idUsuario;
+        this.email = email;
         this.cargo = cargo;
     }
 
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
+    public String getIdUsuario() {
+        return idUsuario;
+    }
 
-    public Integer getIdUsuario() { return idUsuario; }
-    public void setIdUsuario(Integer idUsuario) { this.idUsuario = idUsuario; }
+    public void setIdUsuario(String idUsuario) {
+        this.idUsuario = idUsuario;
+    }
 
-    public CargoUsuario getCargo() { return cargo; }
-    public void setCargo(CargoUsuario cargo) { this.cargo = cargo; }
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public CargoUsuario getCargo() {
+        return cargo;
+    }
+
+    public void setCargo(CargoUsuario cargo) {
+        this.cargo = cargo;
+    }
 }

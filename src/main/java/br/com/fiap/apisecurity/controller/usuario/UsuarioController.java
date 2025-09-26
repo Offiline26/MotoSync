@@ -1,13 +1,10 @@
 package br.com.fiap.apisecurity.controller.usuario;
 
 import br.com.fiap.apisecurity.dto.usuario.UpdateUsuarioDTO;
-import br.com.fiap.apisecurity.dto.usuario.UsuarioDTO;
 import br.com.fiap.apisecurity.dto.usuario.UsuarioPerfilResponse;
 import br.com.fiap.apisecurity.model.usuarios.Usuario;
 import br.com.fiap.apisecurity.repository.UsuarioRepository;
 import br.com.fiap.apisecurity.service.usuario.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,61 +18,72 @@ import java.util.UUID;
 @RequestMapping("/usuarios")
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @PostMapping("/cadastro")
-    public ResponseEntity<?> cadastrar(@RequestBody UsuarioDTO dto) {
-        try {
-            Usuario novoUsuario = usuarioService.salvar(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public UsuarioController(UsuarioService usuarioService,
+                             UsuarioRepository usuarioRepository,
+                             PasswordEncoder passwordEncoder) {
+        this.usuarioService = usuarioService;
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    @PutMapping("/atualizar")
-    public ResponseEntity<?> atualizarPerfil(
-            @RequestBody UpdateUsuarioDTO dto,
-            @AuthenticationPrincipal UserDetails userDetails) {
-
-        Optional<Usuario> optional = usuarioRepository.findByNomeUsuario(userDetails.getUsername());
-        if (optional.isEmpty()) return ResponseEntity.status(404).body("Usuário não encontrado");
-
-        Usuario usuario = optional.get();
-
-        if (!passwordEncoder.matches(dto.getSenha(), usuario.getSenha())) {
-            return ResponseEntity.status(401).body("Senha incorreta");
-        }
-
-        usuario.setNome(dto.getNome());
-        usuario.setNomeUsuario(dto.getNomeUsuario());
-        usuarioRepository.save(usuario);
-
-        return ResponseEntity.ok("Perfil atualizado com sucesso");
+    /** Retorna o perfil do usuário autenticado */
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioPerfilResponse> me(@AuthenticationPrincipal UserDetails principal) {
+        Optional<Usuario> opt = usuarioRepository.findByEmail(principal.getUsername());
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(usuarioService.montarPerfilParaFrontend(opt.get()));
     }
 
+    /** Retorna o perfil por ID (UUID) */
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioPerfilResponse> buscarPerfil(@PathVariable UUID id) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
-        if (usuarioOpt.isEmpty()) return ResponseEntity.notFound().build();
-
-        return ResponseEntity.ok(usuarioService.montarPerfilParaFrontend(usuarioOpt.get()));
+        return usuarioRepository.findById(id)
+                .map(usuarioService::montarPerfilParaFrontend)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/debug/{id}")
-    public ResponseEntity<?> debug(@PathVariable UUID id) {
-        Usuario u = usuarioRepository.findById(id).orElseThrow();
-        System.out.println(u.getPostagens().size()); // ⚠️ deve explodir se estiver fora da transação
-        return ResponseEntity.ok("ok");
-    }
+    /** Atualiza e-mail/senha/cargo do usuário autenticado */
+    @PutMapping("/me")
+    public ResponseEntity<?> atualizarPerfil(@RequestBody UpdateUsuarioDTO dto,
+                                             @AuthenticationPrincipal UserDetails principal) {
 
+        Optional<Usuario> opt = usuarioRepository.findByEmail(principal.getUsername());
+        if (opt.isEmpty()) return ResponseEntity.status(404).body("Usuário não encontrado");
+
+        Usuario usuario = opt.get();
+
+        // Validar senha atual
+        if (dto.getSenhaAtual() == null || !passwordEncoder.matches(dto.getSenhaAtual(), usuario.getSenha())) {
+            return ResponseEntity.status(401).body("Senha atual incorreta");
+        }
+
+        // Trocar e-mail (se enviado)
+        if (dto.getNovoEmail() != null && !dto.getNovoEmail().isBlank()) {
+            String novoEmail = dto.getNovoEmail().trim().toLowerCase();
+            // checar unicidade
+            var existente = usuarioRepository.findByEmail(novoEmail);
+            if (existente.isPresent() && !existente.get().getId().equals(usuario.getId())) {
+                return ResponseEntity.badRequest().body("E-mail já está em uso");
+            }
+            usuario.setEmail(novoEmail);
+        }
+
+        // Trocar senha (se enviada)
+        if (dto.getNovaSenha() != null && !dto.getNovaSenha().isBlank()) {
+            usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
+        }
+
+        // Trocar cargo (se enviado)
+        if (dto.getNovoCargo() != null) {
+            usuario.setCargo(dto.getNovoCargo());
+        }
+
+        usuarioRepository.save(usuario);
+        return ResponseEntity.ok("Perfil atualizado com sucesso");
+    }
 }
-
-

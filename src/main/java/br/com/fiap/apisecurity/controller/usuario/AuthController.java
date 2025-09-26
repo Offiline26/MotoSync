@@ -4,58 +4,51 @@ import br.com.fiap.apisecurity.dto.usuario.LoginRequest;
 import br.com.fiap.apisecurity.dto.usuario.LoginResponse;
 import br.com.fiap.apisecurity.model.usuarios.Usuario;
 import br.com.fiap.apisecurity.repository.UsuarioRepository;
-import br.com.fiap.apisecurity.service.usuario.JwtService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import br.com.fiap.apisecurity.service.usuario.UsuarioService;
+import org.springframework.http.*;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService; // se usar
 
     public AuthController(AuthenticationManager authenticationManager,
-                          JwtService jwtService,
-                          UsuarioRepository usuarioRepository) {
+                          UsuarioRepository usuarioRepository,
+                          UsuarioService usuarioService) {
         this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
+        this.usuarioService = usuarioService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> apiLogin(
+            @RequestBody LoginRequest req,
+            jakarta.servlet.http.HttpServletRequest request,
+            jakarta.servlet.http.HttpServletResponse response) {
         try {
             Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getUsername(), // = nomeUsuario
-                            request.getPassword()
-                    )
+                    new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
             );
 
-            UserDetails user = (UserDetails) auth.getPrincipal();
-            String token = jwtService.generateToken(user);
+            // salva a autenticação na SESSÃO (Opção A)
+            var context = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(auth);
+            org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+            new org.springframework.security.web.context.HttpSessionSecurityContextRepository()
+                    .saveContext(context, request, response);
 
-            Usuario u = usuarioRepository.findByNomeUsuario(request.getUsername())
-                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
-
-            return ResponseEntity.ok(
-                    new LoginResponse(token, u.getId(), u.getCargo())
-            );
+            Usuario u = usuarioRepository.findByEmail(req.getEmail()).orElseThrow();
+            return ResponseEntity.ok(new LoginResponse(u.getId().toString(), u.getEmail(), u.getCargo()));
 
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário ou senha inválidos");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("E-mail ou senha inválidos");
         }
     }
 }
+

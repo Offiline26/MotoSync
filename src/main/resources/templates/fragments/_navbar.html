@@ -1,13 +1,32 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <body th:fragment="navbar">
 <nav class="nav">
   <a class="brand" th:href="@{/}">APISecurity</a>
-  <a th:href="${p != null} ? @{/motos(page=${p.number}, size=${p.size})} : @{/motos}">Motos</a>
-  <a th:href="${p != null} ? @{/vagas(page=${p.number}, size=${p.size})} : @{/vagas}">Vagas</a>
-  <a th:href="${p != null} ? @{/patios(page=${p.number}, size=${p.size})} : @{/patios}">Pátios</a>
+  <a th:href="@{/motos}">Motos</a>
+  <a th:href="@{/vagas}">Vagas</a>
+  <a th:href="@{/patios}">Pátios</a>
   <a th:href="@{/leitores}">Leitores</a>
   <a th:href="@{/registros}">Registros</a>
+
+  <span style="flex:1"></span>
+
+  <!-- Quando logado -->
+  <span sec:authorize="isAuthenticated()">
+    <span class="user" sec:authentication="name">usuario@exemplo.com</span>
+    <form th:action="@{/logout}" method="post" style="display:inline; margin-left:.75rem;">
+      <input type="hidden" th:if="${_csrf != null}"
+             th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+      <button type="submit" class="btn danger">Sair</button>
+    </form>
+  </span>
+
+  <!-- Quando anônimo -->
+  <span sec:authorize="isAnonymous()">
+    <a th:href="@{/login}">Entrar</a>
+    <a th:href="@{/register}" style="margin-left:.5rem;">Criar conta</a>
+  </span>
 </nav>
 </body>
 </html>

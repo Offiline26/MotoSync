@@ -1,39 +1,53 @@
 package br.com.fiap.apisecurity.service.usuario;
 
-import br.com.fiap.apisecurity.dto.usuario.UsuarioDTO;
+import br.com.fiap.apisecurity.dto.usuario.RegisterRequest;
 import br.com.fiap.apisecurity.dto.usuario.UsuarioPerfilResponse;
-import br.com.fiap.apisecurity.mapper.usuario.UsuarioMapper;
+import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 import br.com.fiap.apisecurity.model.usuarios.Usuario;
 import br.com.fiap.apisecurity.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+import java.util.UUID;
+
 @Service
 public class UsuarioService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository repo;
+    private final PasswordEncoder encoder;
 
-    @Autowired
-    private UsuarioMapper mapper;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Transactional
-    public Usuario salvar(UsuarioDTO dto) {
-        Usuario usuario = mapper.toEntity(dto);
-        usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
-        return usuarioRepository.save(usuario);
+    public UsuarioService(UsuarioRepository repo, PasswordEncoder encoder) {
+        this.repo = repo;
+        this.encoder = encoder;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
+    public UUID register(RegisterRequest req) {
+        String email = req.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (repo.findByEmail(email).isPresent()) {
+            throw new DataIntegrityViolationException("E-mail já cadastrado");
+        }
+        Usuario u = new Usuario();
+        u.setEmail(email);
+        u.setSenha(encoder.encode(req.getPassword()));
+        u.setCargo(req.getCargo() != null ? req.getCargo() : CargoUsuario.OPERADOR_PATIO);
+        u = repo.save(u);
+        return u.getId();
+    }
+
+    public Usuario requireByEmail(String email) {
+        return repo.findByEmail(email.trim().toLowerCase(Locale.ROOT))
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+    }
+
     public UsuarioPerfilResponse montarPerfilParaFrontend(Usuario usuario) {
-        UsuarioPerfilResponse perfil = new UsuarioPerfilResponse();
-        perfil.setNome_usuario(usuario.getNomeUsuario());
-        perfil.setCargo(usuario.getCargo()); // enum direto
-        return perfil;
+        return new UsuarioPerfilResponse(
+                usuario.getId() != null ? usuario.getId().toString() : null,
+                usuario.getEmail(),
+                usuario.getCargo()
+        );
     }
 }

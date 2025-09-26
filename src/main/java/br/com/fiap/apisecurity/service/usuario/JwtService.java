@@ -1,60 +1,55 @@
 package br.com.fiap.apisecurity.service.usuario;
 
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
+
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
+import java.util.Map;
 
 @Service
+@ConditionalOnProperty(name = "app.jwt.secret")   // <-- só cria o bean se existir a propriedade
 public class JwtService {
 
-    // >= 32 bytes (ideal: colocar em application.properties)
-    private static final String SECRET_KEY = "minha-chave-secreta-supersegura-fiap-global-solution-32+bytes!!";
-    private static final long EXPIRATION_MS = 1000L * 60 * 60; // 1h
+    private final Key signingKey;
+    private final long ttlMillis;
+    private final String issuer;
+    private final long refreshTtlMillis;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+    public JwtService(
+            @Value("${app.jwt.secret}") String base64Secret,
+            @Value("${app.jwt.ttl-minutes:60}") long ttlMinutes,
+            @Value("${app.jwt.issuer:apisecurity}") String issuer,
+            @Value("${app.jwt.refresh-ttl-minutes:43200}") long refreshTtlMinutes
+    ) {
+        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
+        this.ttlMillis = Duration.ofMinutes(ttlMinutes).toMillis();
+        this.refreshTtlMillis = Duration.ofMinutes(refreshTtlMinutes).toMillis();
+        this.issuer = issuer;
     }
 
-    public String generateToken(UserDetails userDetails) {
-        final Date now = new Date();
-        final Date exp = new Date(now.getTime() + EXPIRATION_MS);
-
+    public String generateToken(UserDetails user) {
+        return build(user.getUsername(), Map.of(), ttlMillis);
+    }
+    public String generateRefreshToken(String subject) {
+        return build(subject, Map.of("typ","refresh"), refreshTtlMillis);
+    }
+    private String build(String sub, Map<String,Object> claims, long life) {
+        Date now = new Date(), exp = new Date(now.getTime()+life);
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(now)
-                .setExpiration(exp)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setClaims(claims).setSubject(sub).setIssuer(issuer)
+                .setIssuedAt(now).setExpiration(exp)
+                .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
-
     public String extractUsername(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    // testando conexão
-
-    public boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isExpired(token);
-    }
-
-    private boolean isExpired(String token) {
-        Date expiration = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getExpiration();
-        return expiration.before(new Date());
+        return Jwts.parserBuilder().setSigningKey(signingKey).build()
+                .parseClaimsJws(token).getBody().getSubject();
     }
 }
