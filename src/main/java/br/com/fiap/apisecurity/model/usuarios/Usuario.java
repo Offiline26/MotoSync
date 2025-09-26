@@ -4,6 +4,7 @@ import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 import jakarta.persistence.*;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "usuario")
@@ -11,7 +12,7 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private UUID id;
 
     private String nome;
 
@@ -31,11 +32,11 @@ public class Usuario {
         this.cargo = cargo;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
