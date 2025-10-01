@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.security;
 
+import br.com.fiap.apisecurity.service.usuario.JwtAuthFilter;
 import org.springframework.context.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -8,9 +9,11 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.*;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
 
@@ -58,7 +61,7 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    SecurityFilterChain api(HttpSecurity http) throws Exception {
+    SecurityFilterChain api(HttpSecurity http, JwtAuthFilter jwtFilter) throws Exception {
         http
                 .securityMatcher("/api/**")
                 .csrf(csrf -> csrf.disable())
@@ -66,32 +69,33 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
-                            res.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 401
                             res.setContentType("application/json");
                             res.getWriter().write("{\"error\":\"unauthorized\"}");
                         })
                         .accessDeniedHandler((req, res, e) -> {
-                            res.setStatus(HttpStatus.FORBIDDEN.value());
+                            res.setStatus(HttpStatus.FORBIDDEN.value()); // 403
                             res.setContentType("application/json");
                             res.getWriter().write("{\"error\":\"forbidden\"}");
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // preflight
-                        .requestMatchers(HttpMethod.POST, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()            // login/refresh públicos da API
+                        .anyRequest().authenticated()
                 )
-                .oauth2Login(Customizer.withDefaults())
-                .formLogin(f -> f.disable())
-                .httpBasic(b -> b.disable());
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .oauth2Login(AbstractHttpConfigurer::disable);
 
-
-        // se tiver filtro JWT:
-        // http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        // Filtro que lê o header Authorization: Bearer <token> e autentica
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
+    @Order(2)
     SecurityFilterChain web(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
@@ -101,23 +105,21 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")              // GET /login renderiza o template
-                        .loginProcessingUrl("/login")     // POST /login processado pelo Security
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error")
                         .permitAll()
                 )
                 .oauth2Login(oauth -> oauth.loginPage("/login"))
                 .logout(l -> l
-                .logoutUrl("/logout")                 // POST /logout (padrão)
-                .logoutSuccessUrl("/login?logout")    // <- volta para a tela de login
-                .invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .deleteCookies("JSESSIONID")
-                .permitAll()
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
                 );
-
-        // NÃO desative CSRF aqui. Deixe o padrão, que funciona com formulário.
         return http.build();
     }
 

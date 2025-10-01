@@ -6,6 +6,7 @@ import br.com.fiap.apisecurity.dto.usuario.RegisterRequest;
 import br.com.fiap.apisecurity.model.usuarios.Usuario;
 import br.com.fiap.apisecurity.repository.UsuarioRepository;
 import br.com.fiap.apisecurity.service.PatioService;
+import br.com.fiap.apisecurity.service.usuario.JwtService;
 import br.com.fiap.apisecurity.service.usuario.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.*;
@@ -24,15 +25,18 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService; // se usar
     private final PatioService patioService;
+    private final JwtService jwtService;
 
     public AuthController(AuthenticationManager authenticationManager,
                           UsuarioRepository usuarioRepository,
                           UsuarioService usuarioService,
-                          PatioService patioService) {
+                          PatioService patioService,
+                          JwtService jwtService) {
         this.authenticationManager = authenticationManager;
         this.usuarioRepository = usuarioRepository;
         this.usuarioService = usuarioService;
         this.patioService = patioService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/login")
@@ -40,23 +44,35 @@ public class AuthController {
             @RequestBody LoginRequest req,
             jakarta.servlet.http.HttpServletRequest request,
             jakarta.servlet.http.HttpServletResponse response) {
+
         try {
+            final String email = req.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+
             Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
+                    new UsernamePasswordAuthenticationToken(email, req.getPassword())
             );
 
-            // salva a autenticação na SESSÃO (Opção A)
-            var context = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(auth);
-            org.springframework.security.core.context.SecurityContextHolder.setContext(context);
-            new org.springframework.security.web.context.HttpSessionSecurityContextRepository()
-                    .saveContext(context, request, response);
+            // Gera JWT (sem salvar em sessão)
+            org.springframework.security.core.userdetails.UserDetails principal =
+                    (org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal();
 
-            Usuario u = usuarioRepository.findByEmail(req.getEmail()).orElseThrow();
-            return ResponseEntity.ok(new LoginResponse(u.getId().toString(), u.getEmail(), u.getCargo()));
+            String token = jwtService.generate(principal.getUsername(), principal.getAuthorities());
 
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("E-mail ou senha inválidos");
+            Usuario u = usuarioRepository.findByEmail(email).orElseThrow();
+
+            // Corpo de resposta com token e dados do usuário
+            java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+            body.put("accessToken", token);
+            body.put("tokenType", "Bearer");
+            body.put("user", new LoginResponse(u.getId().toString(), u.getEmail(), u.getCargo()));
+
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .body(body);
+
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("error", "E-mail ou senha inválidos"));
         }
     }
 
