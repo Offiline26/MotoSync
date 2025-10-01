@@ -47,6 +47,10 @@
         </label>
         <div class="alert danger" th:if="${#fields.hasErrors('patioId')}" th:errors="*{patioId}"></div>
 
+        <div class="actions">
+            <button class="btn btn-primary" type="submit">Cadastrar</button>
+        </div>
+
     </form>
 
     <script>
@@ -67,10 +71,6 @@
         })();
     </script>
 
-        <div class="actions">
-            <button class="btn btn-primary" type="submit">Cadastrar</button>
-        </div>
-    </form>
 </main>
 </body>
 </html>

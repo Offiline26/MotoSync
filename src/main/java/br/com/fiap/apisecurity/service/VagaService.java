@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.service;
 
+import br.com.fiap.apisecurity.controller.usuario.Authz;
 import br.com.fiap.apisecurity.dto.VagaDTO;
 import br.com.fiap.apisecurity.mapper.VagaMapper;
 import br.com.fiap.apisecurity.model.Moto;
@@ -9,6 +10,7 @@ import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.repository.MotoRepository;
 import br.com.fiap.apisecurity.repository.PatioRepository;
 import br.com.fiap.apisecurity.repository.VagaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,121 +31,158 @@ public class VagaService {
     private final VagaRepository vagaRepository;
     private final MotoRepository motoRepository;
     private final PatioRepository patioRepository;
+    private final Authz authz;
 
     @Autowired
-    public VagaService(VagaRepository vagaRepository, MotoRepository motoRepository, PatioRepository patioRepository) {
+    public VagaService(VagaRepository vagaRepository,
+                       MotoRepository motoRepository,
+                       PatioRepository patioRepository,
+                       Authz authz) {
         this.vagaRepository = vagaRepository;
         this.motoRepository = motoRepository;
         this.patioRepository = patioRepository;
+        this.authz = authz;
     }
 
-    // Create
+    // ---------------- CREATE ----------------
+
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "vagas",    allEntries = true),
             @CacheEvict(cacheNames = "vagasAll", allEntries = true)
     })
-    public VagaDTO createVaga(VagaDTO vagaDTO) {
-        Vaga vaga = VagaMapper.toEntity(vagaDTO);
-
-        if (vaga.getIdentificacao() != null) {
-            vaga.setIdentificacao(vaga.getIdentificacao().trim());
+    public VagaDTO createVaga(VagaDTO dto) {
+        // ADMIN cria em qualquer pátio; OPERADOR só no próprio
+        if (!authz.isAdmin()) {
+            UUID userPatio = authz.currentUserPatioIdOrThrow();
+            if (dto.getPatioId() == null || !userPatio.equals(dto.getPatioId())) {
+                throw new SecurityException("Operador só pode criar vaga no próprio pátio.");
+            }
         }
 
-        if (vagaDTO.getMoto() != null && vagaDTO.getMoto().getId() != null) {
-            Moto moto = motoRepository.findById(vagaDTO.getMoto().getId())
-                    .orElseThrow(() -> new RuntimeException("Moto não encontrada"));
-            vaga.setMoto(moto);
+        Vaga entity = VagaMapper.toEntity(dto);
+        if (dto.getPatioId() != null) {
+            Patio patio = patioRepository.findById(dto.getPatioId())
+                    .orElseThrow(() -> new EntityNotFoundException("Pátio não encontrado: " + dto.getPatioId()));
+            entity.setPatio(patio);
+        } else {
+            entity.setPatio(null);
         }
+        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : StatusVaga.LIVRE);
 
-        if (vagaDTO.getPatioId() != null) {
-            Patio patio = patioRepository.findById(vagaDTO.getPatioId())
-                    .orElseThrow(() -> new RuntimeException("Pátio não encontrado"));
-            vaga.setPatio(patio);
-        }
-
-        return VagaMapper.toDto(vagaRepository.save(vaga));
+        Vaga saved = vagaRepository.save(entity);
+        return VagaMapper.toDto(saved);
     }
 
-    // Read by ID (entidade)
+    // ---------------- READ BY ID (Entity) ----------------
+
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "vagas", key="#id")
     public Vaga readVagaById(UUID id) {
-        Optional<Vaga> vaga = vagaRepository.findById(id);
-        return vaga.orElse(null);
+        Vaga vaga = vagaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + id));
+
+        if (authz.isAdmin()) return vaga;
+
+        UUID userPatio = authz.currentUserPatioIdOrThrow();
+        if (vaga.getPatio() == null || !userPatio.equals(vaga.getPatio().getId())) {
+            throw new SecurityException("Acesso negado: vaga de outro pátio.");
+        }
+        return vaga;
     }
 
-    // Read all (paginado) — só cacheia quando for paginado
+    // ---------------- READ ALL (Page) ----------------
+
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = "vagas",
-            condition  = "#pageable != null && #pageable.isPaged()",
-            key        = "#pageable"
+            key="'ADMIN:p:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort!=null ? #pageable.sort : 'UNSORTED')",
+            condition="@authz.isAdmin()"
     )
     public Page<VagaDTO> readAllVagas(Pageable pageable) {
-        Page<Vaga> page = vagaRepository.findAll(pageable);
-        List<VagaDTO> dtoList = page.getContent()
-                .stream()
-                .map(VagaMapper::toDto)
-                .toList();
-        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
+        if (authz.isAdmin()) {
+            Page<Vaga> page = vagaRepository.findAll(pageable);
+            return page.map(VagaMapper::toDto);
+        }
+        UUID patioId = authz.currentUserPatioIdOrThrow();
+        Page<Vaga> page = vagaRepository.findAllByPatio_Id(patioId, pageable);
+        return page.map(VagaMapper::toDto);
     }
 
-    // Read all (lista simples) — ideal para combos em formulários
+    // ---------------- READ ALL (List) ----------------
+
     @Transactional(readOnly = true)
-    @Cacheable(cacheNames = "vagasAll", key = "'ALL'")
+    @Cacheable(cacheNames = "vagasAll", condition="@authz.isAdmin()")
     public List<VagaDTO> readAllVagas() {
-        return vagaRepository.findAll()
-                .stream()
-                .map(VagaMapper::toDto)
-                .toList();
+        if (authz.isAdmin()) {
+            return vagaRepository.findAll().stream().map(VagaMapper::toDto).toList();
+        }
+        UUID patioId = authz.currentUserPatioIdOrThrow();
+        return vagaRepository.findAllByPatio_Id(patioId).stream().map(VagaMapper::toDto).toList();
     }
 
-    // Update
+    // ---------------- UPDATE ----------------
+
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "vagas",    allEntries = true),
             @CacheEvict(cacheNames = "vagasAll", allEntries = true)
     })
-    public VagaDTO updateVaga(UUID id, VagaDTO vagaDTO) {
+    public VagaDTO updateVaga(UUID id, VagaDTO dto) {
         Vaga vaga = vagaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + id));
 
-        vaga.setCoordenadaLat(vagaDTO.getCoordenadaLat());
-        vaga.setCoordenadaLong(vagaDTO.getCoordenadaLong());
-        vaga.setStatus(vagaDTO.getStatus());
-        vaga.setIdentificacao(vagaDTO.getIdentificacao() != null ? vagaDTO.getIdentificacao().trim() : null);
-
-        if (vagaDTO.getPatioId() != null) {
-            Patio patio = patioRepository.findById(vagaDTO.getPatioId())
-                    .orElseThrow(() -> new RuntimeException("Pátio não encontrado"));
-            vaga.setPatio(patio);
+        if (!authz.isAdmin()) {
+            UUID userPatio = authz.currentUserPatioIdOrThrow();
+            UUID alvoPatioId = (dto.getPatioId() != null) ? dto.getPatioId()
+                    : (vaga.getPatio() != null ? vaga.getPatio().getId() : null);
+            if (alvoPatioId == null || !userPatio.equals(alvoPatioId)) {
+                throw new SecurityException("Operador só pode atualizar vaga do próprio pátio.");
+            }
         }
 
-        if (vagaDTO.getMoto() != null && vagaDTO.getMoto().getId() != null) {
-            Moto moto = motoRepository.findById(vagaDTO.getMoto().getId())
-                    .orElseThrow(() -> new RuntimeException("Moto não encontrada"));
-            vaga.setMoto(moto);
-        } else {
-            vaga.setMoto(null);
-        }
+        // aplica DTO -> Entity (mantendo seu mapper)
+        VagaMapper.apply(dto, vaga, idPatio -> patioRepository.findById(idPatio)
+                .orElseThrow(() -> new EntityNotFoundException("Pátio não encontrado: " + idPatio)));
 
-        return VagaMapper.toDto(vagaRepository.save(vaga));
+        Vaga saved = vagaRepository.save(vaga);
+        return VagaMapper.toDto(saved);
     }
 
-    // Delete
+    // ---------------- DELETE ----------------
+
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "vagas",    allEntries = true),
             @CacheEvict(cacheNames = "vagasAll", allEntries = true)
     })
     public void deleteVaga(UUID id) {
-        vagaRepository.deleteById(id);
+        Vaga vaga = vagaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + id));
+        if (!authz.isAdmin()) {
+            UUID userPatio = authz.currentUserPatioIdOrThrow();
+            if (vaga.getPatio() == null || !userPatio.equals(vaga.getPatio().getId())) {
+                throw new SecurityException("Operador só pode remover vaga do próprio pátio.");
+            }
+        }
+        // se tiver moto, impedir ou liberar conforme sua regra atual
+        if (vaga.getMoto() != null) {
+            throw new IllegalStateException("Não é possível remover vaga ocupada.");
+        }
+        vagaRepository.delete(vaga);
     }
 
-    // Read by Patio and Status
+    // ---------------- FILTRO POR PÁTIO E STATUS ----------------
+
     @Transactional(readOnly = true)
     public List<VagaDTO> readByPatioAndStatus(UUID patioId, StatusVaga status) {
-        List<Vaga> vagas = vagaRepository.findByPatioIdAndStatus(patioId, status);
-        return VagaMapper.toDtoList(vagas);
+        if (!authz.isAdmin()) {
+            UUID userPatio = authz.currentUserPatioIdOrThrow();
+            if (!userPatio.equals(patioId)) {
+                throw new SecurityException("Operador só pode consultar o próprio pátio.");
+            }
+        }
+        return vagaRepository.findAllByPatio_IdAndStatus(patioId, status)
+                .stream().map(VagaMapper::toDto).toList();
     }
 }

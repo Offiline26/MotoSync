@@ -43,13 +43,13 @@ public class LeitorViewController {
     }
 
 
-    @GetMapping("/patio/{patioId}")
-    public String porPatio(@PathVariable UUID patioId, Model model) {
-        Patio patio = patioService.readPatioEntityById(patioId)
-                .orElseThrow(() -> new IllegalArgumentException("Pátio não encontrado."));
-
-        model.addAttribute("patio", patio);
-        model.addAttribute("leitores", leitorService.readByPatio(patio)); // ajuste ao seu service
-        return "Leitor/list";
-    }
+//    @GetMapping("/patio/{patioId}")
+//    public String porPatio(@PathVariable UUID patioId, Model model) {
+//        Patio patio = patioService.readPatioById(patioId)
+//                .orElseThrow(() -> new IllegalArgumentException("Pátio não encontrado."));
+//
+//        model.addAttribute("patio", patio);
+//        model.addAttribute("leitores", leitorService.readByPatio(patio)); // ajuste ao seu service
+//        return "Leitor/list";
+//    }
 }

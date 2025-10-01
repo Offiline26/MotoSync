@@ -51,12 +51,13 @@ public class LeitorController {
 
     @GetMapping("/patio/{patioId}")
     public ResponseEntity<List<LeitorDTO>> getLeitoresByPatio(@PathVariable UUID patioId) {
-        return patioService.readPatioEntityById(patioId)
-                .map(patio -> {
-                    List<LeitorDTO> leitoresDTO = leitorService.readByPatio(patio);
-                    return ResponseEntity.ok(leitoresDTO);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        // Garante regra de segurança (ADMIN ou mesmo pátio) e 404 se não existir:
+        patioService.readPatioById(patioId);
+
+        // Busca os leitores por pátio usando o id (sem .map porque não é Optional)
+        List<LeitorDTO> leitoresDTO = leitorService.readByPatio(patioId);
+
+        return ResponseEntity.ok(leitoresDTO);
     }
 
     @GetMapping("/vaga/{vagaId}/tipo/{tipo}")

@@ -5,19 +5,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface MotoRepository extends JpaRepository<Moto, UUID> {
-    // Case-insensitive (evita duplicidade só por maiúscula/minúscula)
-    Moto findByPlacaIgnoreCase(String placa);
+    // Busca por placa (usado por readByPlaca / readByPlacaDto)
+    Optional<Moto> findByPlaca(String placa);
 
-    // Checagens de unicidade (útil em create/update)
-    boolean existsByVagaId(UUID vagaId);
-    Optional<Moto> findByVagaId(UUID vagaId);
+    // Lista geral por status (usado por readAllMotosAtivas quando ADMIN)
+    Page<Moto> findAllByStatus(StatusMoto status, Pageable pageable);
 
-    // Listagens que ignoram INATIVADA (combina com seu "soft delete")
-    Page<Moto> findByStatusNot(StatusMoto status, Pageable pageable);
-    Page<Moto> findByStatus(StatusMoto status, Pageable pageable);
+    // Filtro por vagas pertencentes ao pátio do operador (usado por readAllMotos)
+    Page<Moto> findAllByVagaIdIn(Collection<UUID> vagaIds, Pageable pageable);
 
+    // Filtro por status + vagas do pátio (usado por readAllMotosAtivas quando operador)
+    Page<Moto> findAllByStatusAndVagaIdIn(StatusMoto status, Collection<UUID> vagaIds, Pageable pageable);
 }

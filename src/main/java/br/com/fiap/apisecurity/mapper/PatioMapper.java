@@ -40,6 +40,20 @@ public final class PatioMapper {
         return patio;
     }
 
+    // >>> NOVO: aplica os valores do DTO na entidade existente (update parcial por campos não nulos)
+    public static void apply(PatioDTO dto, Patio target) {
+        if (dto == null || target == null) return;
+
+        if (dto.getNome()   != null) target.setNome(dto.getNome());
+        if (dto.getRua()    != null) target.setRua(dto.getRua());
+        if (dto.getNumero() != null) target.setNumero(dto.getNumero());
+        if (dto.getBairro() != null) target.setBairro(dto.getBairro());
+        if (dto.getCidade() != null) target.setCidade(dto.getCidade());
+        if (dto.getEstado() != null) target.setEstado(dto.getEstado());
+        if (dto.getPais()   != null) target.setPais(dto.getPais());
+        // Nota: não mexemos no ID aqui.
+    }
+
     // Converte uma lista de entidades para DTOs
     public static List<PatioDTO> toDtoList(List<Patio> patios) {
         return patios.stream()
