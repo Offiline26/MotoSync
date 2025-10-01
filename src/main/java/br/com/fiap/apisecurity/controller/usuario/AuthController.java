@@ -52,7 +52,6 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(email, req.getPassword())
             );
 
-            // Gera JWT (sem salvar em sessão)
             org.springframework.security.core.userdetails.UserDetails principal =
                     (org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal();
 
@@ -60,7 +59,6 @@ public class AuthController {
 
             Usuario u = usuarioRepository.findByEmail(email).orElseThrow();
 
-            // Corpo de resposta com token e dados do usuário
             java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
             body.put("accessToken", token);
             body.put("tokenType", "Bearer");

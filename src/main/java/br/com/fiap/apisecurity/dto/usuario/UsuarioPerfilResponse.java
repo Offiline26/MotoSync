@@ -4,10 +4,9 @@ import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 
 import java.util.UUID;
 
-/** Payload simples para exibir o perfil do usuário. */
 public class UsuarioPerfilResponse {
 
-    private String id;              // UUID como string
+    private String id;
     private String email;
     private CargoUsuario cargo;
     private UUID patioId;

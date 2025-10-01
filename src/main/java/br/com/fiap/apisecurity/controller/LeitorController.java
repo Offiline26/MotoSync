@@ -51,10 +51,8 @@ public class LeitorController {
 
     @GetMapping("/patio/{patioId}")
     public ResponseEntity<List<LeitorDTO>> getLeitoresByPatio(@PathVariable UUID patioId) {
-        // Garante regra de segurança (ADMIN ou mesmo pátio) e 404 se não existir:
         patioService.readPatioById(patioId);
 
-        // Busca os leitores por pátio usando o id (sem .map porque não é Optional)
         List<LeitorDTO> leitoresDTO = leitorService.readByPatio(patioId);
 
         return ResponseEntity.ok(leitoresDTO);
@@ -62,11 +60,9 @@ public class LeitorController {
 
     @GetMapping("/vaga/{vagaId}/tipo/{tipo}")
     public ResponseEntity<LeitorDTO> getLeitorByVagaAndTipo(@PathVariable UUID vagaId, @PathVariable TipoLeitor tipo) {
-        // Chama o serviço para pegar a entidade Vaga, não o DTO
-        Vaga vaga = vagaService.readVagaById(vagaId);  // Agora estamos usando a entidade Vaga
-        if (vaga == null) return ResponseEntity.notFound().build();  // Verifica se a vaga foi encontrada
+        Vaga vaga = vagaService.readVagaById(vagaId);
+        if (vaga == null) return ResponseEntity.notFound().build();
 
-        // Passa a entidade Vaga para o serviço de Leitor
         Optional<LeitorDTO> leitorOpt = leitorService.readByVagaAndTipo(vaga, tipo);
         return leitorOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }

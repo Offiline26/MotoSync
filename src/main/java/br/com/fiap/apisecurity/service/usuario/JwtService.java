@@ -7,9 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
 import javax.crypto.SecretKey;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -17,7 +15,7 @@ import java.util.Collection;
 import java.util.Date;
 
 @Service
-@ConditionalOnProperty(name = "app.jwt.secret")   // <-- só cria o bean se existir a propriedade
+@ConditionalOnProperty(name = "app.jwt.secret")
 public class JwtService {
 
     private final SecretKey key;

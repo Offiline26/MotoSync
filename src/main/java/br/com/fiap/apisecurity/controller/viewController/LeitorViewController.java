@@ -18,6 +18,8 @@ import java.util.UUID;
 @Controller
 @RequestMapping("/leitores")
 
+// Á SER FINALIZADA
+
 public class LeitorViewController {
 
 
@@ -41,7 +43,6 @@ public class LeitorViewController {
         model.addAttribute("leitores", leitorService.readByTipo(tipo));
         return "leitor/list"; // pode usar outra view específica
     }
-
 
 //    @GetMapping("/patio/{patioId}")
 //    public String porPatio(@PathVariable UUID patioId, Model model) {

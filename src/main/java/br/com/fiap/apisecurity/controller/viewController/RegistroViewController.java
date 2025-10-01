@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @RequestMapping("/registros")
 public class RegistroViewController {
 
+// Á SER FINALIZADA
 
     private final RegistroService registroService;
 

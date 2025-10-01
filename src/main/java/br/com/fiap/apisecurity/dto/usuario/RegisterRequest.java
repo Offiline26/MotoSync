@@ -7,7 +7,7 @@ import java.util.UUID;
 public class RegisterRequest {
     private String email;
     private String password;
-    private CargoUsuario cargo; // opcional, default OPERADOR_PATIO
+    private CargoUsuario cargo;
     private UUID patioId;
 
     public UUID getPatioId() {

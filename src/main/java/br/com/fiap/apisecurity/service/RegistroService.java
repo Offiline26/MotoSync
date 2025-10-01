@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// Á SER FINALIZADA
+
 @Service
 public class RegistroService {
 

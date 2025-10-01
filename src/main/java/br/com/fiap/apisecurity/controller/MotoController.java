@@ -34,9 +34,9 @@ public class MotoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<MotoDTO> getMotoById(@PathVariable UUID id) {
-        MotoDTO motoDTO = motoService.readMotoById(id); // já retorna o DTO
+        MotoDTO motoDTO = motoService.readMotoById(id);
         if (motoDTO == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(motoDTO); // NÃO precisa converter novamente
+        return ResponseEntity.ok(motoDTO);
     }
 
     @GetMapping("/placa/{placa}")

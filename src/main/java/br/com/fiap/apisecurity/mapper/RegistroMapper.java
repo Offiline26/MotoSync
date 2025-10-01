@@ -5,7 +5,6 @@ import br.com.fiap.apisecurity.dto.RegistroDTO;
 import br.com.fiap.apisecurity.model.Leitor;
 import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.Registro;
-import br.com.fiap.apisecurity.model.Vaga;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,7 +13,6 @@ public final class RegistroMapper {
 
     private RegistroMapper() {}
 
-    // Converte de Entidade para DTO
     public static RegistroDTO toDto(Registro registro) {
         if (registro == null) return null;
         return new RegistroDTO(
@@ -26,7 +24,6 @@ public final class RegistroMapper {
         );
     }
 
-    // Converte de DTO para Entidade
     public static Registro toEntity(RegistroDTO dto, Moto moto, Leitor leitor) {
         if (dto == null) return null;
         Registro registro = new Registro();
@@ -38,7 +35,6 @@ public final class RegistroMapper {
         return registro;
     }
 
-    // Converte uma lista de entidades para DTOs
     public static List<RegistroDTO> toDtoList(List<Registro> registros) {
         return registros.stream()
                 .map(RegistroMapper::toDto)

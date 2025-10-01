@@ -26,20 +26,17 @@ public class PatioController {
         this.patioService = patioService;
     }
 
-    // GET /api/patios?page=&size=&sort=nome,asc
     @GetMapping
     public Page<PatioDTO> list(@PageableDefault(size = 10, sort = "nome") Pageable pageable) {
         return patioService.readAllPatios(pageable);
     }
 
-    // GET /api/patios/{id}
     @GetMapping("/{id}")
     public ResponseEntity<PatioDTO> getOne(@PathVariable UUID id) {
         var dto = patioService.readPatioById(id);
         return (dto != null) ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
     }
 
-    // POST /api/patios
     @PostMapping
     public ResponseEntity<PatioDTO> create(@Valid @RequestBody PatioDTO body) {
         var saved = patioService.createPatio(body);
@@ -48,17 +45,15 @@ public class PatioController {
                 .body(saved);
     }
 
-    // PUT /api/patios/{id}
     @PutMapping("/{id}")
     public ResponseEntity<PatioDTO> update(@PathVariable UUID id, @Valid @RequestBody PatioDTO body) {
         var updated = patioService.updatePatio(id, body);
         return ResponseEntity.ok(updated);
     }
 
-    // DELETE /api/patios/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        patioService.inativarPatio(id); // ou remova definitivamente se seu serviço assim fizer
+        patioService.inativarPatio(id);
         return ResponseEntity.noContent().build();
     }
 }

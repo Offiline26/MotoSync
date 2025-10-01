@@ -1,7 +1,6 @@
 package br.com.fiap.apisecurity.service.usuario;
 
 import br.com.fiap.apisecurity.controller.usuario.Authz;
-import br.com.fiap.apisecurity.dto.PatioDTO;
 import br.com.fiap.apisecurity.dto.usuario.RegisterRequest;
 import br.com.fiap.apisecurity.dto.usuario.UsuarioPerfilResponse;
 import br.com.fiap.apisecurity.model.Patio;
@@ -48,7 +47,6 @@ public class UsuarioService {
             throw new DataIntegrityViolationException("E-mail já cadastrado");
         }
 
-        // Safe-check: se não estiver autenticado, tratamos como não-admin
         boolean adminAutenticado;
         try {
             adminAutenticado = authz.isAdmin();
@@ -56,7 +54,6 @@ public class UsuarioService {
             adminAutenticado = false;
         }
 
-        // Se não for ADMIN logado, força OPERADOR_PATIO
         final CargoUsuario cargo = adminAutenticado
                 ? Optional.ofNullable(req.getCargo()).orElse(CargoUsuario.OPERADOR_PATIO)
                 : CargoUsuario.OPERADOR_PATIO;
@@ -72,14 +69,11 @@ public class UsuarioService {
                 throw new IllegalArgumentException("Selecione o pátio onde o operador atua.");
             }
 
-            // NÃO chame readPatioById aqui (exige autenticação).
-            // Valide existência carregando a ENTIDADE diretamente:
             Patio patio = patioService.findById(patioId)
                     .orElseThrow(() -> new EntityNotFoundException("Pátio não encontrado: " + patioId));
 
             u.setPatio(patio);
         } else {
-            // ADMIN normalmente não fica preso a um pátio
             u.setPatio(null);
         }
 
@@ -103,7 +97,6 @@ public class UsuarioService {
         );
     }
 
-    // --- helpers ---
     private UUID parseUuid(String raw) {
         try {
             return UUID.fromString(raw.trim());

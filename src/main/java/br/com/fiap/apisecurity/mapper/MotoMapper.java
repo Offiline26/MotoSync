@@ -4,8 +4,6 @@ import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.model.Moto;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public final class MotoMapper {

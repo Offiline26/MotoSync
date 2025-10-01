@@ -16,7 +16,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,15 +36,12 @@ public class PatioService {
         this.authz = authz;
     }
 
-    // ---------------- CREATE ----------------
-
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames="patios",    allEntries = true),
             @CacheEvict(cacheNames="patiosAll", allEntries = true)
     })
     public PatioDTO createPatio(PatioDTO dto) {
-        // regra proposta: somente ADMIN cria pátios
         if (!authz.isAdmin()) {
             throw new SecurityException("Apenas ADMIN pode criar pátios.");
         }
@@ -53,8 +49,6 @@ public class PatioService {
         Patio saved = patioRepository.save(entity);
         return PatioMapper.toDto(saved);
     }
-
-    // ---------------- READ BY ID (DTO) ----------------
 
     @Transactional(readOnly = true)
     @Cacheable(cacheNames="patios", key="#id")
@@ -70,15 +64,12 @@ public class PatioService {
         return PatioMapper.toDto(e);
     }
 
-    // ---------------- FILTROS SIMPLES ----------------
-
     @Transactional(readOnly = true)
     public List<PatioDTO> readByCidade(String cidade) {
         if (authz.isAdmin()) {
             return patioRepository.findByCidadeContainingIgnoreCase(cidade)
                     .stream().map(PatioMapper::toDto).toList();
         }
-        // operador: só retorna o próprio pátio (se combinar com a cidade)
         UUID userPatio = authz.currentUserPatioIdOrThrow();
         return patioRepository.findById(userPatio)
                 .filter(p -> p.getCidade()!=null && p.getCidade().toLowerCase().contains(cidade.toLowerCase()))
@@ -101,13 +92,11 @@ public class PatioService {
         throw new SecurityException("Operador só pode consultar o próprio pátio.");
     }
 
-    // ---------------- READ ALL (Page) ----------------
-
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames="patios",
             key="'ADMIN:p:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort!=null ? #pageable.sort : 'UNSORTED')",
-            condition="@authz.isAdmin()" // ⇐ só cacheia p/ ADMIN
+            condition="@authz.isAdmin()"
     )
     public Page<PatioDTO> readAllPatios(Pageable pageable) {
         if (authz.isAdmin()) {
@@ -119,8 +108,6 @@ public class PatioService {
                 .map(p -> new PageImpl<>(List.of(PatioMapper.toDto(p)), pageable, 1L))
                 .orElseGet(() -> new PageImpl<>(List.of(), pageable, 0L));
     }
-
-    // ---------------- UPDATE ----------------
 
     @Transactional
     @Caching(evict = {
@@ -143,8 +130,6 @@ public class PatioService {
         return PatioMapper.toDto(saved);
     }
 
-    // ---------------- INATIVAR ----------------
-
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames="patios",    allEntries = true),
@@ -166,8 +151,6 @@ public class PatioService {
         }
         patioRepository.delete(patio);
     }
-
-    // ---------------- AUXILIARES (mantidos) ----------------
 
     public List<Patio> findAllEntities() {
         return patioRepository.findAll();

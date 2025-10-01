@@ -30,7 +30,6 @@ public class UsuarioController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    /** Retorna o perfil do usuário autenticado */
     @GetMapping("/me")
     public ResponseEntity<UsuarioPerfilResponse> me(@AuthenticationPrincipal UserDetails principal) {
         Optional<Usuario> opt = usuarioRepository.findByEmail(principal.getUsername());
@@ -38,7 +37,6 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.montarPerfilParaFrontend(opt.get()));
     }
 
-    /** Retorna o perfil por ID (UUID) */
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioPerfilResponse> buscarPerfil(@PathVariable UUID id) {
         return usuarioRepository.findById(id)
@@ -47,7 +45,6 @@ public class UsuarioController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    /** Atualiza e-mail/senha/cargo do usuário autenticado */
     @PutMapping("/me")
     public ResponseEntity<?> atualizarPerfil(@RequestBody UpdateUsuarioDTO dto,
                                              @AuthenticationPrincipal UserDetails principal) {
@@ -57,12 +54,10 @@ public class UsuarioController {
 
         Usuario usuario = opt.get();
 
-        // Validar senha atual
         if (dto.getSenhaAtual() == null || !passwordEncoder.matches(dto.getSenhaAtual(), usuario.getSenha())) {
             return ResponseEntity.status(401).body("Senha atual incorreta");
         }
 
-        // Trocar e-mail (se enviado)
         if (dto.getNovoEmail() != null && !dto.getNovoEmail().isBlank()) {
             String novoEmail = dto.getNovoEmail().trim().toLowerCase();
             // checar unicidade
@@ -73,12 +68,10 @@ public class UsuarioController {
             usuario.setEmail(novoEmail);
         }
 
-        // Trocar senha (se enviada)
         if (dto.getNovaSenha() != null && !dto.getNovaSenha().isBlank()) {
             usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
         }
 
-        // Trocar cargo (se enviado)
         if (dto.getNovoCargo() != null) {
             usuario.setCargo(dto.getNovoCargo());
         }

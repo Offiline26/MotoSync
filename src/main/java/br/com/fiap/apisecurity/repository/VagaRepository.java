@@ -1,11 +1,10 @@
 package br.com.fiap.apisecurity.repository;
-import br.com.fiap.apisecurity.model.Patio;
+
 import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,15 +18,12 @@ public interface VagaRepository extends JpaRepository<Vaga, UUID> {
     List<Vaga> findAllByPatio_IdAndStatus(UUID patioId, StatusVaga status);
     long countByPatio_Id(UUID patioId);
 
-    // IDs das vagas do pátio (para filtrar motos do operador)
     @Query("select v.id from Vaga v where v.patio.id = :patioId")
     List<UUID> findAllIdsByPatioId(@Param("patioId") UUID patioId);
 
-    // >>> AQUI: troquei 'codigo' por 'identificacao'
     @Query("select v.id, v.identificacao from Vaga v where v.id in :ids")
     List<Object[]> findIdAndCodigoByIdIn(@Param("ids") Set<UUID> ids);
 
-    // Helper usado pelo MotoService
     default Map<UUID, String> findIdentificacoesByIds(Set<UUID> ids) {
         if (ids == null || ids.isEmpty()) return Collections.emptyMap();
         List<Object[]> rows = findIdAndCodigoByIdIn(ids);
