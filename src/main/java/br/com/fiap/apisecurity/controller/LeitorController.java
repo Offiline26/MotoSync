@@ -51,11 +51,12 @@ public class LeitorController {
 
     @GetMapping("/patio/{patioId}")
     public ResponseEntity<List<LeitorDTO>> getLeitoresByPatio(@PathVariable UUID patioId) {
-        Patio patio = patioService.readPatioEntityById(patioId); // agora correto
-        if (patio == null) return ResponseEntity.notFound().build();
-
-        List<LeitorDTO> leitoresDTO = leitorService.readByPatio(patio);
-        return ResponseEntity.ok(leitoresDTO);
+        return patioService.readPatioEntityById(patioId)
+                .map(patio -> {
+                    List<LeitorDTO> leitoresDTO = leitorService.readByPatio(patio);
+                    return ResponseEntity.ok(leitoresDTO);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/vaga/{vagaId}/tipo/{tipo}")

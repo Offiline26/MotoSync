@@ -78,18 +78,46 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // preflight
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/refresh").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.POST, "/**").permitAll()
                 )
+                .oauth2Login(Customizer.withDefaults())
                 .formLogin(f -> f.disable())
                 .httpBasic(b -> b.disable());
+
 
         // se tiver filtro JWT:
         // http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
+        return http.build();
+    }
+
+    @Bean
+    SecurityFilterChain web(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/login", "/register","/error",
+                                "/css/**","/js/**","/images/**",
+                                "/oauth2/**","/login/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")              // GET /login renderiza o template
+                        .loginProcessingUrl("/login")     // POST /login processado pelo Security
+                        .defaultSuccessUrl("/", true)
+                        .failureUrl("/login?error")
+                        .permitAll()
+                )
+                .oauth2Login(oauth -> oauth.loginPage("/login"))
+                .logout(l -> l
+                .logoutUrl("/logout")                 // POST /logout (padrão)
+                .logoutSuccessUrl("/login?logout")    // <- volta para a tela de login
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
+                );
+
+        // NÃO desative CSRF aqui. Deixe o padrão, que funciona com formulário.
         return http.build();
     }
 

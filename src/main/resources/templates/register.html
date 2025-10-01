@@ -2,7 +2,6 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/_head :: head('Cadastro')}"></head>
 <body>
-<header th:replace="~{fragments/_navbar :: navbar}"></header>
 
 <main class="container" th:with="isEdit=${false}">
     <div class="header">
@@ -14,7 +13,8 @@
 
     <!-- POST /register cadastra -->
     <form th:action="@{/register}" method="post" th:object="${form}">
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <input type="hidden" th:if="${_csrf != null}"
+               th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
         <label>E-mail
             <input type="email" th:field="*{email}" required/>
@@ -34,6 +34,38 @@
             </select>
         </label>
         <div class="alert danger" th:if="${#fields.hasErrors('cargo')}" th:errors="*{cargo}"></div>
+
+        <!-- adicione depois do campo Cargo -->
+        <label id="grp-patio" style="display:none">
+            Pátio em que atua
+            <select th:field="*{patioId}" id="patioId">
+                <option value="" disabled selected>—</option>
+                <option th:each="p : ${patios}"
+                        th:value="${p.id}"
+                        th:text="${p.nome}"></option>
+            </select>
+        </label>
+        <div class="alert danger" th:if="${#fields.hasErrors('patioId')}" th:errors="*{patioId}"></div>
+
+    </form>
+
+    <script>
+        (function(){
+            const cargo = document.querySelector('select[name="cargo"]');
+            const grp   = document.getElementById('grp-patio');
+            const patio = document.getElementById('patioId');
+
+            function togglePatio(){
+                const show = cargo && cargo.value === 'OPERADOR_PATIO';
+                grp.style.display = show ? '' : 'none';
+                patio.required = show;
+                patio.disabled = !show; // se desabilitado, o navegador não envia o campo
+                if (!show) patio.value = '';
+            }
+            cargo && cargo.addEventListener('change', togglePatio);
+            togglePatio();
+        })();
+    </script>
 
         <div class="actions">
             <button class="btn btn-primary" type="submit">Cadastrar</button>

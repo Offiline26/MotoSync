@@ -48,9 +48,10 @@ public class PatioService {
                 .orElse(null);
     }
 
-    public Patio readPatioEntityById(UUID id) {
-        return patioRepository.findById(id).orElse(null);
+    public Optional<Patio> readPatioEntityById(UUID id) {
+        return patioRepository.findById(id);
     }
+
 
     // Read by cidade
     public List<PatioDTO> readByCidade(String cidade) {
@@ -110,6 +111,15 @@ public class PatioService {
         }
 
         patioRepository.delete(patio);
+    }
+
+    public List<Patio> findAllEntities() {
+        return patioRepository.findAll();
+    }
+
+
+    public Optional<Patio> findById(UUID id) {
+        return patioRepository.findById(id);
     }
 }
 

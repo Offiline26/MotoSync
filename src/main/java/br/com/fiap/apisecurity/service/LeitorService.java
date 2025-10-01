@@ -46,7 +46,9 @@ public class LeitorService {
         leitor.setTipo(dto.getTipo());
 
         // Buscar entidades
-        Patio patio = patioService.readPatioEntityById(dto.getPatioId());
+        Patio patio = patioService.readPatioEntityById(dto.getPatioId())
+                .orElseThrow(() -> new IllegalArgumentException("Pátio não encontrado."));
+
         Vaga vaga = vagaService.readVagaById(dto.getVagaId());
 
         if (patio == null || vaga == null) {
@@ -111,7 +113,8 @@ public class LeitorService {
         leitor.setTipo(dto.getTipo());
 
         // Recupera e atualiza as entidades Patio e Vaga
-        Patio patio = patioService.readPatioEntityById(dto.getPatioId());
+        Patio patio = patioService.readPatioEntityById(dto.getPatioId())
+                .orElseThrow(() -> new IllegalArgumentException("Pátio não encontrado."));
         Vaga vaga = vagaService.readVagaById(dto.getVagaId());
 
         if (patio == null || vaga == null) {
