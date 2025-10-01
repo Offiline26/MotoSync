@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head( (form != null and form.id != null) ? 'Editar Moto' : 'Nova Moto' )}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container" th:with="isEdit=${form != null and form.id != null}">
+  <h1 th:text="${isEdit} ? 'Editar Moto' : 'Nova Moto'"></h1>
+
+  <!-- Troque a abertura do form -->
+  <form th:action="${isEdit} ? @{/motos/{id}(id=${form.id})} : @{/motos}"
+        method="post"
+        th:object="${form}">
+    <input type="hidden" name="_method" th:if="${isEdit}" value="put"/>
+    <input type="hidden" th:if="${_csrf != null}"
+           th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <label>Placa
+      <!-- th:field resolve o value a partir de form.getPlaca() -->
+      <input type="text"
+             th:field="*{placa}"
+             th:attr="readonly=${isEdit} ? 'readonly' : null"
+             required />
+    </label>
+
+    <label>Status
+      <!-- binding direto ao enum -->
+      <select th:field="*{status}" required>
+        <option th:each="s : ${T(br.com.fiap.apisecurity.model.enums.StatusMoto).values()}"
+                th:value="${s}" th:text="${s}">
+        </option>
+      </select>
+    </label>
+
+    <label>Vaga
+      <select th:field="*{vagaId}" required>
+        <option th:if="${!isEdit}" value="" selected>—</option>
+        <option th:each="v : ${vagas}"
+                th:value="${v.id}"
+                th:text="${v.identificacao != null ? v.identificacao : v.id}">
+        </option>
+      </select>
+    </label>
+
+    <div class="actions">
+      <a class="btn" th:href="@{/motos}">Voltar</a>
+      <button class="btn btn-primary" type="submit">Salvar</button>
+    </div>
+  </form>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/_head :: head('Home')}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container">
+    <!-- Mostra o usuário logado -->
+    <h1>Bem-vindo, <span sec:authentication="name">usuário</span>!</h1>
+    <!-- ou: <span sec:authentication="principal.username"></span> -->
+
+    <p sec:authorize="hasRole('ADMIN')">Você tem acesso de administrador.</p>
+
+    <!-- Exemplo de conteúdo só para anônimos -->
+    <div sec:authorize="isAnonymous()">
+        <p>Você não está autenticado.</p>
+        <a class="btn" th:href="@{/login}">Entrar</a>
+    </div>
+</main>
+</body>
+</html>

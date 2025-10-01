@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/registros")
+@RequestMapping("/api/registros")
 public class RegistroController {
 
     private final RegistroService registroService;

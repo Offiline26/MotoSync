@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head('Motos')}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container"
+      th:with="
+        pg=${page != null ? page : null},
+        rows=${pg != null ? pg.content : motos}
+      ">
+    <div class="header">
+        <h1>Motos</h1>
+        <a class="btn" th:href="@{/motos/novo}">Nova moto</a>
+    </div>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Placa</th>
+            <th>Status</th>
+            <th>Vaga</th>
+            <th class="right">Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="m : ${page != null ? page.content : motos}">
+            <td th:text="${m.placa}">AAA-0000</td>
+            <td th:text="${m.status}">DISPONIVEL</td>
+
+            <!-- mostra identificação da vaga ou travessão; title com UUID -->
+            <td th:text="${m.vagaIdentificacao != null ? m.vagaIdentificacao : '—'}"
+                th:title="${m.vagaId}">—</td>
+
+            <td>
+                <a th:href="@{'/motos/' + ${m.id} + '/editar'}">Editar</a>
+
+                <!-- POST + _method=delete (HiddenHttpMethodFilter) -->
+                <form th:action="@{'/motos/' + ${m.id}}" method="post"
+                      th:attr="data-placa=${m.placa}"
+                      onsubmit="return confirm('Excluir a moto ' + this.dataset.placa + '?')">
+                    <input type="hidden" name="_method" value="delete"/>
+                    <input type="hidden" th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn danger">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- paginação só quando existe Page -->
+    <div class="pager" th:if="${pg != null}">
+        <a th:classappend="${pg.first} ? 'disabled'"
+           th:href="@{/motos(page=${pg.number - 1}, size=${pg.size})}">«</a>
+
+        <span>página <span th:text="${pg.number + 1}">1</span>
+      de <span th:text="${pg.totalPages}">1</span></span>
+
+        <a th:classappend="${pg.last} ? 'disabled'"
+           th:href="@{/motos(page=${pg.number + 1}, size=${pg.size})}">»</a>
+    </div>
+</main>
+</body>
+</html>

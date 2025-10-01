@@ -4,6 +4,8 @@ import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.model.Moto;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public final class MotoMapper {
@@ -13,11 +15,17 @@ public final class MotoMapper {
     public static MotoDTO toDto(Moto moto) {
         if (moto == null) return null;
         return new MotoDTO(
-                moto.getId(),
-                moto.getPlaca(),
-                moto.getStatus(),
-                moto.getVagaId()
-        );
+        moto.getId(),
+        moto.getPlaca(),
+        moto.getStatus(),
+        moto.getVagaId());
+    }
+
+    // ajuda para setar a identificação já no DTO
+    public static MotoDTO toDto(Moto m, String vagaIdent) {
+        MotoDTO dto = toDto(m);
+        if (dto != null) dto.setVagaIdentificacao(vagaIdent);
+        return dto;
     }
 
     public static Moto toEntity(MotoDTO dto) {
@@ -35,6 +43,7 @@ public final class MotoMapper {
                 .map(MotoMapper::toDto)
                 .collect(Collectors.toList());
     }
+
 }
 
 

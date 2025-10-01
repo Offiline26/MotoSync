@@ -5,10 +5,13 @@ import br.com.fiap.apisecurity.mapper.RegistroMapper;
 import br.com.fiap.apisecurity.model.Leitor;
 import br.com.fiap.apisecurity.model.Moto;
 import br.com.fiap.apisecurity.model.Registro;
+import br.com.fiap.apisecurity.model.Vaga;
+import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import br.com.fiap.apisecurity.model.enums.TipoMovimentacao;
 import br.com.fiap.apisecurity.repository.LeitorRepository;
 import br.com.fiap.apisecurity.repository.MotoRepository;
 import br.com.fiap.apisecurity.repository.RegistroRepository;
+import br.com.fiap.apisecurity.repository.VagaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -31,12 +34,14 @@ public class RegistroService {
     private final RegistroRepository registroRepository;
     private final MotoRepository motoRepository;
     private final LeitorRepository leitorRepository;
+    private final VagaRepository vagaRepository;
 
     @Autowired
-    public RegistroService(RegistroRepository registroRepository, MotoRepository motoRepository, LeitorRepository leitorRepository) {
+    public RegistroService(RegistroRepository registroRepository, MotoRepository motoRepository, LeitorRepository leitorRepository, VagaRepository vagaRepository) {
         this.registroRepository = registroRepository;
         this.motoRepository = motoRepository;
         this.leitorRepository = leitorRepository;
+        this.vagaRepository = vagaRepository;
     }
 
     // Create
@@ -110,6 +115,26 @@ public class RegistroService {
     public void deleteRegistro(UUID id) {
         registroRepository.deleteById(id);
     }
+
+//    @Transactional
+//    public void deleteMoto(UUID id) {
+//        if (registroRepository.existsByMotoId(id)) {
+//            throw new BusinessException("Não é possível excluir: há registros vinculados a esta moto.");
+//        }
+//
+//        // se Vaga referencia Moto, desvincule antes:
+//        motoRepository.findById(id).ifPresent(m -> {
+//            Vaga vaga = m.setVagaId();
+//            if (vaga != null) {
+//                vaga.setMoto(null);
+//                vaga.setStatus(StatusVaga.LIVRE); // se fizer sentido
+//                vagaRepository.save(vaga);
+//            }
+//            motoRepository.delete(m);
+//            motoRepository.flush();
+//        });
+//    }
+
 }
 
 

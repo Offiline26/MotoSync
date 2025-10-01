@@ -4,66 +4,61 @@ import br.com.fiap.apisecurity.dto.PatioDTO;
 import br.com.fiap.apisecurity.mapper.PatioMapper;
 import br.com.fiap.apisecurity.model.Patio;
 import br.com.fiap.apisecurity.service.PatioService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/patios")
+@RequestMapping("/api/patios")
 public class PatioController {
 
     private final PatioService patioService;
 
-    @Autowired
     public PatioController(PatioService patioService) {
         this.patioService = patioService;
     }
 
+    // GET /api/patios?page=&size=&sort=nome,asc
     @GetMapping
-    public ResponseEntity<Page<PatioDTO>> getAllPatios(Pageable pageable) {
-        return ResponseEntity.ok(patioService.readAllPatios(pageable));
+    public Page<PatioDTO> list(@PageableDefault(size = 10, sort = "nome") Pageable pageable) {
+        return patioService.readAllPatios(pageable);
     }
 
+    // GET /api/patios/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<PatioDTO> getPatioById(@PathVariable UUID id) {
-        PatioDTO patioDTO = patioService.readPatioById(id); // sem conversão adicional
-        if (patioDTO == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(patioDTO);
+    public ResponseEntity<PatioDTO> getOne(@PathVariable UUID id) {
+        var dto = patioService.readPatioById(id);
+        return (dto != null) ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
     }
 
-
-    @GetMapping("/cidade/{cidade}")
-    public ResponseEntity<List<PatioDTO>> getPatiosByCidade(@PathVariable String cidade) {
-        return ResponseEntity.ok(patioService.readByCidade(cidade));
-    }
-
-    @GetMapping("/nome/{nome}")
-    public ResponseEntity<PatioDTO> getPatioByNome(@PathVariable String nome) {
-        PatioDTO dto = patioService.readByNome(nome);
-        if (dto == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(dto);
-    }
-
+    // POST /api/patios
     @PostMapping
-    public ResponseEntity<PatioDTO> createPatio(@RequestBody PatioDTO patioDTO) {
-        return ResponseEntity.ok(patioService.createPatio(patioDTO));
+    public ResponseEntity<PatioDTO> create(@Valid @RequestBody PatioDTO body) {
+        var saved = patioService.createPatio(body);
+        return ResponseEntity
+                .created(URI.create("/api/patios/" + saved.getId()))
+                .body(saved);
     }
 
+    // PUT /api/patios/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<PatioDTO> updatePatio(@PathVariable UUID id, @RequestBody PatioDTO patioDTO) {
-        PatioDTO atualizado = patioService.updatePatio(id, patioDTO);
-        if (atualizado == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(atualizado);
+    public ResponseEntity<PatioDTO> update(@PathVariable UUID id, @Valid @RequestBody PatioDTO body) {
+        var updated = patioService.updatePatio(id, body);
+        return ResponseEntity.ok(updated);
     }
 
+    // DELETE /api/patios/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePatio(@PathVariable UUID id) {
-        patioService.deletePatio(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        patioService.inativarPatio(id); // ou remova definitivamente se seu serviço assim fizer
         return ResponseEntity.noContent().build();
     }
 }

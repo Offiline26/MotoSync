@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head( (form != null and form.id != null) ? 'Editar Pátio' : 'Novo Pátio' )}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container" th:with="isEdit=${form != null and form.id != null}">
+    <div class="header">
+        <h1 th:text="${isEdit} ? 'Editar Pátio' : 'Novo Pátio'">Pátio</h1>
+        <a class="btn" th:href="@{/patios}">Voltar</a>
+    </div>
+
+    <form th:action="${isEdit} ? @{/patios/{id}(id=${form.id})} : @{/patios}"
+          method="post" th:object="${form}" novalidate>
+        <input type="hidden" name="_method" th:if="${isEdit}" value="put"/>
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <fieldset class="grid-2">
+            <label>Nome <input th:field="*{nome}" type="text" maxlength="100" required/></label>
+            <label>País <input th:field="*{pais}" type="text" required/></label>
+            <label>Rua <input th:field="*{rua}" type="text" required/></label>
+            <label>Número <input th:field="*{numero}" type="text" required/></label>
+            <label>Bairro <input th:field="*{bairro}" type="text"/></label>
+            <label>Cidade <input th:field="*{cidade}" type="text" required/></label>
+            <label>Estado (UF) <input th:field="*{estado}" type="text" maxlength="2" placeholder="SP" required/></label>
+        </fieldset>
+
+        <div class="actions">
+            <button class="btn btn-primary" type="submit">Salvar</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>
