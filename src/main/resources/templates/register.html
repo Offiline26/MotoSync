@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head('Cadastro')}"></head>
+<body>
+<header th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container" th:with="isEdit=${false}">
+    <div class="header">
+        <h1>Cadastro</h1>
+        <a class="btn" th:href="@{/login}">Voltar ao login</a>
+    </div>
+
+    <div th:if="${error}" class="alert danger" th:text="${error}"></div>
+
+    <!-- POST /register cadastra -->
+    <form th:action="@{/register}" method="post" th:object="${form}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <label>E-mail
+            <input type="email" th:field="*{email}" required/>
+        </label>
+        <div class="alert danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+
+        <label>Senha
+            <input type="password" th:field="*{password}" minlength="6" required/>
+        </label>
+        <div class="alert danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+
+        <label>Cargo
+            <select th:field="*{cargo}" required>
+                <option value="" disabled selected>—</option>
+                <option th:value="OPERADOR_PATIO">Operador de Pátio</option>
+                <option th:value="ADMIN">Admin</option>
+            </select>
+        </label>
+        <div class="alert danger" th:if="${#fields.hasErrors('cargo')}" th:errors="*{cargo}"></div>
+
+        <div class="actions">
+            <button class="btn btn-primary" type="submit">Cadastrar</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

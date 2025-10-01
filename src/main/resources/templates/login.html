@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/_head :: head('Login')}"></head>
+<body>
+<!-- Inclui a navbar apenas se houver usuário autenticado -->
+<header th:if="${#request?.userPrincipal != null}"
+        th:replace="~{fragments/_navbar :: navbar}"></header>
+
+<main class="container">
+    <div class="header">
+        <h1>Login</h1>
+        <a class="btn" th:href="@{/register}">Criar conta</a>
+    </div>
+
+    <!-- mensagens do Spring Security -->
+    <div th:if="${param.error}" class="alert danger">E-mail ou senha inválidos.</div>
+    <div th:if="${param.logout}" class="alert success">Você saiu da conta.</div>
+    <div th:if="${param.registered}" class="alert success">Cadastro realizado. Faça login.</div>
+    <div th:if="${ok}" class="alert success" th:text="${ok}"></div>
+    <div th:if="${error}" class="alert danger" th:text="${error}"></div>
+
+    <!-- IMPORTANTE: os names DEVEM ser 'email' e 'password' -->
+    <form th:action="@{/login}" method="post">
+        <input type="hidden" th:if="${_csrf != null}"
+               th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <label>E-mail
+            <input type="email" name="email" required autocomplete="username" autofocus />
+        </label>
+
+        <label>Senha
+            <input type="password" name="password" required autocomplete="current-password"/>
+        </label>
+
+        <div class="actions">
+            <button class="btn btn-primary" type="submit">Entrar</button>
+        </div>
+    </form>
+
+    <div class="oauth-login">
+        <h3>Ou faça login com:</h3>
+        <a href="https://motosync.onrender.com/login/oauth2/code/google" class="btn btn-google">
+            Login com Google
+        </a>
+        <a href="https://motosync.onrender.com/login/oauth2/code/github" class="btn btn-github">
+            Login com GitHub
+        </a>
+    </div>
+</main>
+</body>
+</html>
