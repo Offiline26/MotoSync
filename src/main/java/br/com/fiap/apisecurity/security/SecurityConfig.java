@@ -1,7 +1,7 @@
 package br.com.fiap.apisecurity.security;
 
 import br.com.fiap.apisecurity.service.usuario.JwtAuthFilter;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -11,13 +11,21 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -125,5 +133,45 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
+    }
+
+    @Bean
+    OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() {
+        var delegate = new DefaultOAuth2UserService();
+        return request -> {
+            OAuth2User user = delegate.loadUser(request);
+
+            String reg = request.getClientRegistration().getRegistrationId(); // "github" | "google"
+            Map<String, Object> attrs = new HashMap<>(user.getAttributes());
+
+            if ("github".equals(reg) && (attrs.get("email") == null || String.valueOf(attrs.get("email")).isBlank())) {
+                // Busca lista de e-mails
+                var rest = new RestTemplate();
+                var headers = new HttpHeaders();
+                headers.setBearerAuth(request.getAccessToken().getTokenValue());
+                headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+                var entity = new HttpEntity<Void>(headers);
+
+                var resp = rest.exchange("https://api.github.com/user/emails", HttpMethod.GET, entity, List.class);
+                if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                    // Procura o "primary" e "verified"
+                    @SuppressWarnings("unchecked")
+                    var primary = ((List<Map<String, Object>>) resp.getBody())
+                            .stream()
+                            .filter(m -> Boolean.TRUE.equals(m.get("primary")))
+                            .findFirst()
+                            .orElse(null);
+                    if (primary != null) attrs.put("email", primary.get("email"));
+                    else if (!((List<?>) resp.getBody()).isEmpty()) {
+                        attrs.put("email", ((Map<?,?>)((List<?>) resp.getBody()).get(0)).get("email"));
+                    }
+                }
+            }
+
+            var authorities = user.getAuthorities();
+            // mantém a mesma chave de nome do provider (não precisa mexer no user-name-attribute aqui)
+            return new DefaultOAuth2User(authorities, attrs,
+                    request.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName());
+        };
     }
 }

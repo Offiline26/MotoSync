@@ -106,9 +106,11 @@ public class MotoService {
 
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames="motosList",
-            key="'ADMIN:p:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort!=null ? #pageable.sort : 'UNSORTED')",
-            condition="@authz.isAdmin()"
+            cacheNames = "motosList",
+            key       = "(#pageable != null && #pageable.isPaged()) ? \n" +
+                    "        (#pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort != null ? #pageable.sort : 'UNSORTED')) \n" +
+                    "        : 'UNPAGED'",   // usa o próprio Pageable (tem equals/hashCode)
+            condition = "@authz.isAdmin()"
     )
     public Page<MotoDTO> readAllMotos(Pageable pageable) {
         if (authz.isAdmin()) {
@@ -220,7 +222,9 @@ public class MotoService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames="motosListAtivas",
-            key="'ADMIN:p:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort!=null ? #pageable.sort : 'UNSORTED')",
+            key="(#pageable != null && #pageable.isPaged()) ? \n" +
+                    "        (#pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort != null ? #pageable.sort : 'UNSORTED')) \n" +
+                    "        : 'UNPAGED'",
             condition="@authz.isAdmin()"
     )
     public Page<MotoDTO> readAllMotosAtivas(Pageable pageable) {

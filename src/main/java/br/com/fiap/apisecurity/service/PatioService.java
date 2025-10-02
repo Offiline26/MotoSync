@@ -95,7 +95,9 @@ public class PatioService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames="patios",
-            key="'ADMIN:p:' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort!=null ? #pageable.sort : 'UNSORTED')",
+            key="(#pageable != null && #pageable.isPaged()) ? \n" +
+                    "        (#pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort != null ? #pageable.sort : 'UNSORTED')) \n" +
+                    "        : 'UNPAGED'",
             condition="@authz.isAdmin()"
     )
     public Page<PatioDTO> readAllPatios(Pageable pageable) {
