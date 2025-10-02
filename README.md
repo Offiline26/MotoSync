@@ -24,9 +24,9 @@ A aplicação resolve o problema da desorganização de motos nos pátios da emp
 
 ---
 
-## 🧠 Entidades e Funcionalidades
+### 🧠 Entidades e Funcionalidades
 
-###🏢 Pátio (/patios)
+## 🏢 Pátio (/patios)
 
 GET /patios – lista pátios
 
@@ -37,7 +37,7 @@ GET /patios/cidade/{cidade} – filtra por cidade
 POST /patios – cria pátio
 Campos: nome, rua, numero, bairro, cidade, estado, pais
 
-###📍 Vaga (/vagas)
+## 📍 Vaga (/vagas)
 
 GET /vagas – lista vagas
 
@@ -48,7 +48,7 @@ GET /vagas/patio/{patioId}/status/{status} – por pátio e status (OCUPADA, LIV
 POST /vagas – cria vaga
 Campos: coordenadaLat, coordenadaLong, status, patioId, motoId
 
-###🏍️ Moto (/motos)
+## 🏍️ Moto (/motos)
 
 GET /motos – lista motos
 
@@ -59,7 +59,7 @@ GET /motos/placa/{placa} – por placa
 POST /motos – cria moto
 Campos: placa, marca, modelo, cor, vagaId
 
-###📡 Leitor (/leitores)
+## 📡 Leitor (/leitores)
 
 GET /leitores – lista leitores
 
@@ -72,7 +72,7 @@ GET /leitores/vaga/{vagaId}/tipo/{tipo} – por vaga e tipo
 POST /leitores – cria leitor
 Campos: tipo (ENTRADA | VAGA), vagaId, patioId
 
-###🧾 Registro (/registros)
+## 🧾 Registro (/registros)
 
 GET /registros – lista registros
 
@@ -87,7 +87,7 @@ Campos: motoId, leitorId, tipo, dataHora
 
 ---
 
-###🔐 Segurança (JWT + Regras de Escopo)
+## 🔐 Segurança (JWT + Regras de Escopo)
 
 Login API: POST /api/auth/login → retorna accessToken (JWT).
 
@@ -125,11 +125,13 @@ Cadastro (operador): http://localhost:8081/register
 
 Login: POST /api/auth/login
 
-Usuários de exemplo (dev)
+Usuários de exemplo (dev):
+
 ADMIN: thiago@email.com / 123456
+
 OPERADOR: lgsreal@gmail.com / 123456
 
-### 🧭 Perfis e UI (resumo)
+## 🧭 Perfis e UI (resumo)
 
 ADMIN vê/edita tudo (pátios, vagas, motos, leitores, registros).
 
@@ -137,7 +139,7 @@ OPERADOR_PATIO só vê/atua no seu pátio.
 
 As telas Thymeleaf (navbar/footer/head) servem de prova funcional das regras e incluem CSRF.
 
-### 🧰 Troubleshooting
+## 🧰 Troubleshooting
 
 403 / dados “de outro pátio” → verifique o papel do usuário e o patioId associado.
 
