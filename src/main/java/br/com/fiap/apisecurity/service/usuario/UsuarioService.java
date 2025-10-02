@@ -38,14 +38,25 @@ public class UsuarioService {
 
     @Transactional
     public UUID register(RegisterRequest req) {
-        if (req == null || req.getEmail() == null || req.getPassword() == null) {
-            throw new IllegalArgumentException("Dados de registro inválidos.");
+
+        if (req == null) {
+            throw new IllegalArgumentException("Dados de registro ausentes.");
+        }
+        final String email = Optional.ofNullable(req.getEmail())
+                .map(e -> e.trim().toLowerCase(Locale.ROOT))
+                .orElse("");
+        if (email.isEmpty()) {
+            throw new IllegalArgumentException("Informe um e-mail.");
+        }
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Informe uma senha.");
         }
 
-        final String email = req.getEmail().trim().toLowerCase(Locale.ROOT);
+
         if (repo.findByEmail(email).isPresent()) {
             throw new DataIntegrityViolationException("E-mail já cadastrado");
         }
+
 
         boolean adminAutenticado;
         try {
@@ -54,28 +65,30 @@ public class UsuarioService {
             adminAutenticado = false;
         }
 
-        final CargoUsuario cargo = adminAutenticado
+        final CargoUsuario cargoEfetivo = adminAutenticado
                 ? Optional.ofNullable(req.getCargo()).orElse(CargoUsuario.OPERADOR_PATIO)
                 : CargoUsuario.OPERADOR_PATIO;
+
 
         final Usuario u = new Usuario();
         u.setEmail(email);
         u.setSenha(encoder.encode(req.getPassword()));
-        u.setCargo(cargo);
+        u.setCargo(cargoEfetivo);
 
-        if (cargo == CargoUsuario.OPERADOR_PATIO) {
-            UUID patioId = req.getPatioId();
+
+        if (cargoEfetivo == CargoUsuario.OPERADOR_PATIO) {
+            final UUID patioId = req.getPatioId();
             if (patioId == null) {
                 throw new IllegalArgumentException("Selecione o pátio onde o operador atua.");
             }
-
-            Patio patio = patioService.findById(patioId)
+            final Patio patio = patioService.findById(patioId)
                     .orElseThrow(() -> new EntityNotFoundException("Pátio não encontrado: " + patioId));
-
             u.setPatio(patio);
         } else {
+
             u.setPatio(null);
         }
+
 
         return repo.save(u).getId();
     }
