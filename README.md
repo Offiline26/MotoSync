@@ -1,6 +1,6 @@
 # MotoSync API
 
-**LINK DO VIDEO**: [[MotoSync]](https://youtu.be/BCJ4cMwEo4Q)
+**LINK DO VIDEO**: [[MotoSync]](https://youtu.be/Lxsvl0MYdp4)
 
 **MotoSync** é uma API RESTful desenvolvida em Java com Spring Boot para o gerenciamento inteligente de motos em pátios da empresa Mottu. Integrando tecnologias modernas e recursos de autenticação, o sistema permite organização e rastreamento das motos de forma segura, com integração com dispositivos IoT e um aplicativo mobile.
 
@@ -14,88 +14,90 @@ A aplicação resolve o problema da desorganização de motos nos pátios da emp
 
 ## ⚙️ Tecnologias Utilizadas
 
-- **Java 17**
+- **Java 21**
 - **Spring Boot**
 - **Spring Data JPA**
 - **Spring Security + JWT**
 - **Spring Cache**
-- **Banco H2** (para testes)
-- **Postman** (testes)
+- **Oracle SQL**
+- **ThymeLeaf** (Para Testes)
 
 ---
 
-## 🧠 Entidades e Funcionalidades
+### 🧠 Entidades e Funcionalidades
 
-### 🏢 Pátio (`/patios`)
+## 🏢 Pátio (/patios)
 
-- `GET /patios`: Lista todos os pátios
-- `GET /patios/{id}`: Busca um pátio por ID
-- `GET /patios/cidade/{cidade}`: Filtra pátios pela cidade
-- `POST /patios`: Cria um novo pátio
+GET /patios – lista pátios
 
-**Campos:** `nome`, `rua`, `numero`, `bairro`, `cidade`, `estado`, `pais`
+GET /patios/{id} – pátio por ID
 
----
+GET /patios/cidade/{cidade} – filtra por cidade
 
-### 📍 Vaga (`/vagas`)
+POST /patios – cria pátio
+Campos: nome, rua, numero, bairro, cidade, estado, pais
 
-- `GET /vagas`: Lista todas as vagas
-- `GET /vagas/{id}`: Busca vaga por ID
-- `GET /vagas/patio/{patioId}/status/{status}`: Filtra vagas por pátio e status (OCUPADA, LIVRE)
-- `POST /vagas`: Cria nova vaga
+## 📍 Vaga (/vagas)
 
-**Campos:** `coordenadaLat`, `coordenadaLong`, `status`, `patioId`, `motoId`
+GET /vagas – lista vagas
 
----
+GET /vagas/{id} – por ID
 
-### 🏍️ Moto (`/motos`)
+GET /vagas/patio/{patioId}/status/{status} – por pátio e status (OCUPADA, LIVRE)
 
-- `GET /motos`: Lista todas as motos
-- `GET /motos/{id}`: Busca por ID
-- `GET /motos/placa/{placa}`: Busca por placa
-- `POST /motos`: Cadastra nova moto
+POST /vagas – cria vaga
+Campos: coordenadaLat, coordenadaLong, status, patioId, motoId
 
-**Campos:** `placa`, `marca`, `modelo`, `cor`, `vagaId` (relacionada com a vaga)
+## 🏍️ Moto (/motos)
 
----
+GET /motos – lista motos
 
-### 📡 Leitor (`/leitores`)
+GET /motos/{id} – por ID
 
-- `GET /leitores`: Lista todos os leitores
-- `GET /leitores/{id}`: Busca leitor por ID
-- `GET /leitores/patio/{patioId}`: Busca leitores de um pátio
-- `GET /leitores/vaga/{vagaId}/tipo/{tipo}`: Busca leitor por tipo e vaga
-- `POST /leitores`: Cadastra novo leitor
+GET /motos/placa/{placa} – por placa
 
-**Campos:** `tipo` (ENTRADA ou VAGA), `vagaId`, `patioId`
+POST /motos – cria moto
+Campos: placa, marca, modelo, cor, vagaId
 
----
+## 📡 Leitor (/leitores)
 
-### 🧾 Registro (`/registros`)
+GET /leitores – lista leitores
 
-- `GET /registros`: Lista todos os registros
-- `GET /registros/moto/{motoId}`: Busca registros por moto
-- `GET /registros/moto/{motoId}/tipo/{tipo}`: Filtra por tipo (ENTRADA/SAIDA)
-- `GET /registros/periodo?inicio=...&fim=...`: Busca por período
-- `POST /registros`: Cria novo registro
+GET /leitores/{id} – por ID
 
-**Campos:** `motoId`, `leitorId`, `tipo` (ENTRADA/SAIDA), `dataHora`
+GET /leitores/patio/{patioId} – por pátio
 
----
+GET /leitores/vaga/{vagaId}/tipo/{tipo} – por vaga e tipo
 
-### 👤 Autenticação Simulada
+POST /leitores – cria leitor
+Campos: tipo (ENTRADA | VAGA), vagaId, patioId
 
-O login do sistema é realizado automaticamente, sem necessidade de credenciais reais.
-Durante essa fase de testes, um token JWT falso é gerado para permitir o acesso às rotas autenticadas e facilitar os testes no Postman e na aplicação.
+## 🧾 Registro (/registros)
+
+GET /registros – lista registros
+
+GET /registros/moto/{motoId} – por moto
+
+GET /registros/moto/{motoId}/tipo/{tipo} – por moto + tipo (ENTRADA | SAIDA)
+
+GET /registros/periodo?inicio=...&fim=... – por período
+
+POST /registros – cria registro
+Campos: motoId, leitorId, tipo, dataHora
 
 ---
 
-## 🔐 Segurança com JWT
+## 🔐 Segurança (JWT + Regras de Escopo)
 
-A autenticação é realizada via JWT (JSON Web Token), garantindo proteção aos endpoints privados.
+Login API: POST /api/auth/login → retorna accessToken (JWT).
 
-- Ao fazer login, um token JWT é gerado.
-- Esse token deve ser enviado no header `Authorization` em todas as requisições privadas. Mas ja esta inserido por padrão para testes.
+Uso: enviar Authorization: Bearer <token> nas rotas privadas.
+
+Regras:
+
+ADMIN: acesso total.
+
+OPERADOR_PATIO: tudo filtrado pelo pátio do usuário (aplicado nos Services e Repositories).
 
 ---
 
@@ -106,18 +108,46 @@ A autenticação é realizada via JWT (JSON Web Token), garantindo proteção ao
 ```bash
 git clone https://github.com/Offiline26/MotoSync.git
 cd MotoSync
+
+utilizar a branch #pro-gui
 ```
+A aplicação sobe em http://localhost:8081/login
 
-2. Use o Postman para testar os endpoints.
+## Web (Thymeleaf):
 
----
+Home: http://localhost:8081/
 
-## 🧪 Testes no Postman
+Login: http://localhost:8081/login
 
-Todos os endpoints estão prontos para serem testados via Postman. Você pode importar o seguinte JSON de coleção (gerado automaticamente no futuro).
+Cadastro (operador): http://localhost:8081/register
 
-**Link do WorkSpace:** https://www.postman.com/telecoms-saganist-72325256/workspace/api-mottu/collection/39491755-36b595b3-3410-4e2d-ad20-0389be134c4d?action=share&creator=39491755
----
+## API: http://localhost:8081/api/**
+
+Login: POST /api/auth/login
+
+Usuários de exemplo (dev):
+
+ADMIN: thiago@email.com / 123456
+
+OPERADOR: lgsreal@gmail.com / 123456
+
+## 🧭 Perfis e UI (resumo)
+
+ADMIN vê/edita tudo (pátios, vagas, motos, leitores, registros).
+
+OPERADOR_PATIO só vê/atua no seu pátio.
+
+As telas Thymeleaf (navbar/footer/head) servem de prova funcional das regras e incluem CSRF.
+
+## 🧰 Troubleshooting
+
+403 / dados “de outro pátio” → verifique o papel do usuário e o patioId associado.
+
+401 → faltou header Authorization.
+
+CSRF em formulários web → certifique-se de incluir o token ${_csrf.parameterName} / ${_csrf.token}.
+
+Oracle não conecta → confira porta/serviço (ex.: XEPDB1) e credenciais.
 
 ## 👨‍💻 Autores
 
