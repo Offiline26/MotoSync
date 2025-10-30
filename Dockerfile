@@ -1,9 +1,9 @@
 FROM gradle:jdk21-graal AS BUILD
-WORKDIR /usr/app/
+WORKDIR /usr/app
 COPY . .
+RUN ./gradlew clean bootJar -x test --no-daemon
 
-RUN gradle build
 FROM openjdk:21-jdk-slim
 COPY --from=BUILD /usr/app .
 EXPOSE 8081
-ENTRYPOINT exec java -jar build/libs/api-security-0.0.1-SNAPSHOT.jar
+ENTRYPOINT ["java","-jar","build/libs/api-security-0.0.1-SNAPSHOT.jar"]
