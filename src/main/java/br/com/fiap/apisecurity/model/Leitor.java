@@ -22,7 +22,7 @@ public class Leitor {
 
     @ManyToOne
     @JoinColumn(name = "vaga_id")
-    private Vaga vaga; // só será preenchido se o tipo for VAGA
+    private Vaga vaga;
 
     public Leitor() {}
 

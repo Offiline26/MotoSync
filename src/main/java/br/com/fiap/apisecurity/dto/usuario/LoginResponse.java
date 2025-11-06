@@ -2,11 +2,9 @@ package br.com.fiap.apisecurity.dto.usuario;
 
 import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 
-import java.util.UUID;
-
 public class LoginResponse {
 
-    private String idUsuario;         // UUID como string
+    private String idUsuario;
     private String email;
     private CargoUsuario cargo;
 

@@ -2,7 +2,6 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/_head :: head('Cadastro')}"></head>
 <body>
-<header th:replace="~{fragments/_navbar :: navbar}"></header>
 
 <main class="container" th:with="isEdit=${false}">
     <div class="header">
@@ -12,33 +11,61 @@
 
     <div th:if="${error}" class="alert danger" th:text="${error}"></div>
 
-    <!-- POST /register cadastra -->
-    <form th:action="@{/register}" method="post" th:object="${form}">
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <form th:action="@{/register}" method="post">
 
-        <label>E-mail
-            <input type="email" th:field="*{email}" required/>
-        </label>
-        <div class="alert danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-        <label>Senha
-            <input type="password" th:field="*{password}" minlength="6" required/>
-        </label>
-        <div class="alert danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+        <input type="email" name="email" required
+               th:value="${form != null ? form.email : ''}" />
 
-        <label>Cargo
-            <select th:field="*{cargo}" required>
-                <option value="" disabled selected>—</option>
-                <option th:value="OPERADOR_PATIO">Operador de Pátio</option>
-                <option th:value="ADMIN">Admin</option>
+        <input type="password" name="password" required />
+
+        <div th:if="${isAdmin}">
+            <label for="cargo">Cargo</label>
+            <select id="cargo" name="cargo" th:value="${form != null ? form.cargo : 'OPERADOR_PATIO'}">
+                <option value="ADMIN">Admin</option>
+                <option value="OPERADOR_PATIO">Operador de pátio</option>
             </select>
-        </label>
-        <div class="alert danger" th:if="${#fields.hasErrors('cargo')}" th:errors="*{cargo}"></div>
-
-        <div class="actions">
-            <button class="btn btn-primary" type="submit">Cadastrar</button>
         </div>
+
+        <input type="hidden" name="cargo" value="OPERADOR_PATIO" th:if="${!isAdmin}"/>
+
+        <div id="patioRow"
+             th:with="ehOperador=${isAdmin ? (form != null ? form.cargo == 'OPERADOR_PATIO' : true) : true}"
+             th:attr="style=${ehOperador} ? '' : 'display:none'">
+            <label for="patioId">Pátio</label>
+            <select id="patioId" name="patioId"
+                    th:required="${ehOperador}"
+                    th:disabled="${!ehOperador}">
+                <option value="" hidden th:selected="${form == null || form.patioId == null}">Selecione...</option>
+                <option th:each="p : ${patios}" th:value="${p.id}" th:text="${p.nome}"
+                        th:selected="${form != null && form.patioId == p.id}"></option>
+            </select>
+        </div>
+
+        <button type="submit">Cadastrar</button>
     </form>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const cargo = document.getElementById('cargo');
+            if (!cargo) return;
+
+            function togglePatio() {
+                const operador = cargo.value === 'OPERADOR_PATIO';
+                const patioRow = document.getElementById('patioRow');
+                const patio = document.getElementById('patioId');
+                patioRow.style.display = operador ? '' : 'none';
+                patio.toggleAttribute('required', operador);
+                patio.toggleAttribute('disabled', !operador);
+                if (!operador) patio.value = '';
+            }
+            togglePatio();
+            cargo.addEventListener('change', togglePatio);
+        });
+    </script>
+
 </main>
 </body>
 </html>

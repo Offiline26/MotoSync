@@ -34,7 +34,13 @@
                 th:title="${m.vagaId}">—</td>
 
             <td>
-                <a th:href="@{'/motos/' + ${m.id} + '/editar'}">Editar</a>
+                <a th:href="@{('/motos/' + ${m.id} + '/editar')(
+                    page=${page != null ? page.number : 0},
+                    size=${page != null ? page.size : 10}
+                  )}"
+                           class="btn btn-sm btn-primary">
+                            Editar
+                </a>
 
                 <!-- POST + _method=delete (HiddenHttpMethodFilter) -->
                 <form th:action="@{'/motos/' + ${m.id}}" method="post"

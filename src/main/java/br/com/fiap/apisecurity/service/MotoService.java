@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.service;
 
+import br.com.fiap.apisecurity.controller.usuario.Authz;
 import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.mapper.MotoMapper;
 import br.com.fiap.apisecurity.model.Moto;
@@ -19,7 +20,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,11 +28,15 @@ public class MotoService {
 
     private final MotoRepository motoRepository;
     private final VagaRepository vagaRepository;
+    private final Authz authz;
 
     @Autowired
-    public MotoService(MotoRepository motoRepository, VagaRepository vagaRepository) {
-        this.vagaRepository = vagaRepository;
+    public MotoService(MotoRepository motoRepository,
+                       VagaRepository vagaRepository,
+                       Authz authz) {
         this.motoRepository = motoRepository;
+        this.vagaRepository = vagaRepository;
+        this.authz = authz;
     }
 
     @Transactional
@@ -44,71 +48,96 @@ public class MotoService {
             }
     )
     public MotoDTO createMoto(MotoDTO dto) {
-        if (dto.getVagaId() == null) {
-            throw new IllegalArgumentException("Selecione uma vaga para cadastrar a moto.");
+
+        if (!authz.isAdmin()) {
+            UUID userPatio = authz.currentUserPatioIdOrThrow();
+
+            if (dto.getVagaId() == null) {
+                throw new SecurityException("Operador só pode criar moto vinculada a Vaga do seu pátio.");
+            }
+            Vaga vaga = vagaRepository.findById(dto.getVagaId())
+                    .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + dto.getVagaId()));
+            if (vaga.getPatio() == null || !userPatio.equals(vaga.getPatio().getId())) {
+                throw new SecurityException("Operador só pode criar moto em vaga do próprio pátio.");
+            }
         }
-        var moto = MotoMapper.toEntity(dto);
-        // primeiro salva a moto para ter o ID (se precisar)
-        moto = motoRepository.save(moto);
 
-        moverMotoDePara(moto, dto.getVagaId());
-        moto = motoRepository.save(moto);
+        Moto moto = MotoMapper.toEntity(dto);
+        if (moto.getVagaId() != null) {
+            Vaga vaga = vagaRepository.findById(moto.getVagaId())
+                    .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + moto.getVagaId()));
+            if (vaga.getStatus() == StatusVaga.OCUPADA) {
+                throw new IllegalStateException("Vaga já está ocupada.");
+            }
+            vaga.setMoto(moto);
+            vaga.setStatus(StatusVaga.OCUPADA);
+            vagaRepository.save(vaga);
+        }
 
+        moto.setStatus(StatusMoto.DISPONIVEL);
+        Moto saved = motoRepository.save(moto);
+        return MotoMapper.toDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames="motosById", key="#id")
+    public MotoDTO readMotoById(UUID id) {
+        Moto moto = readMotoByIdEntity(id);
         return MotoMapper.toDto(moto);
     }
 
-    // Read by ID
-    @Transactional
-    @Cacheable(cacheNames = "motosById", key = "#id")
-    public MotoDTO readMotoById(UUID id) {
-        var moto = motoRepository.findById(id).orElse(null);
-        if (moto == null) return null;
-        String ident = null;
-        if (moto.getVagaId() != null) {
-            ident = vagaRepository.findById(moto.getVagaId())
-                    .map(Vaga::getIdentificacao).orElse(null);
-        }
-        return MotoMapper.toDto(moto, ident);
-    }
-
-    @Transactional
-    @Cacheable(cacheNames = "motosById", key = "#id")
-    // Para RegistroService ou uso interno
+    @Transactional(readOnly = true)
     public Moto readMotoByIdEntity(UUID id) {
-        return motoRepository.findById(id).orElse(null);
+        Moto moto = motoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada: " + id));
+
+        if (authz.isAdmin()) return moto;
+
+        UUID userPatio = authz.currentUserPatioIdOrThrow();
+        UUID vagaId = moto.getVagaId();
+        if (vagaId == null) throw new SecurityException("Moto sem vaga atual não é visível ao operador.");
+        Vaga vaga = vagaRepository.findById(vagaId)
+                .orElseThrow(() -> new EntityNotFoundException("Vaga da moto não encontrada: " + vagaId));
+        if (vaga.getPatio() == null || !userPatio.equals(vaga.getPatio().getId())) {
+            throw new SecurityException("Acesso negado: moto pertence a outro pátio.");
+        }
+        return moto;
     }
 
-    // Read all
-    @Transactional
-    @Cacheable(cacheNames = "motosList",
-            condition = "#pageable != null && #pageable.paged",
-            key = "T(java.lang.String).format('%s_%s_%s', #pageable.pageNumber, #pageable.pageSize, #pageable.sort)")
+    @Transactional(readOnly = true)
+    @Cacheable(
+            cacheNames = "motosList",
+            key       = "(#pageable != null && #pageable.isPaged()) ? \n" +
+                    "        (#pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort != null ? #pageable.sort : 'UNSORTED')) \n" +
+                    "        : 'UNPAGED'",   // usa o próprio Pageable (tem equals/hashCode)
+            condition = "@authz.isAdmin()"
+    )
     public Page<MotoDTO> readAllMotos(Pageable pageable) {
-        Page<Moto> page = motoRepository.findAll(pageable);
+        if (authz.isAdmin()) {
+            Page<Moto> page = motoRepository.findAll(pageable);
+            Map<UUID, String> idToIdent = loadVagaIdentificacao(page.getContent());
+            List<MotoDTO> content = page.getContent()
+                    .stream()
+                    .map(m -> MotoMapper.toDto(m, idToIdent.get(m.getVagaId())))
+                    .toList();
+            return new PageImpl<>(content, pageable, page.getTotalElements());
+        }
 
-        // pega os IDs de vagas que aparecem na página
-        var ids = page.getContent().stream()
-                .map(Moto::getVagaId)
-                .filter(java.util.Objects::nonNull)
-                .collect(java.util.stream.Collectors.toSet());
+        UUID patioId = authz.currentUserPatioIdOrThrow();
+        List<UUID> vagaIds = vagaRepository.findAllIdsByPatioId(patioId);
+        if (vagaIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
 
-        // carrega as vagas e monta mapa id -> identificacao
-        var idToIdent = ids.isEmpty() ? java.util.Collections.<UUID,String>emptyMap()
-                : vagaRepository.findAllById(ids).stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        Vaga::getId,
-                        v -> v.getIdentificacao()
-                ));
-
-        // mapeia as motos para DTO já com a identificacao
-        var content = page.getContent().stream()
+        Page<Moto> page = motoRepository.findAllByVagaIdIn(vagaIds, pageable);
+        Map<UUID, String> idToIdent = loadVagaIdentificacao(page.getContent());
+        List<MotoDTO> content = page.getContent()
+                .stream()
                 .map(m -> MotoMapper.toDto(m, idToIdent.get(m.getVagaId())))
                 .toList();
-
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
 
-    // Update
     @Transactional
     @Caching(
             put = { @CachePut(cacheNames="motosById", key="#result.id") },
@@ -119,115 +148,150 @@ public class MotoService {
     )
     public MotoDTO updateMoto(UUID id, MotoDTO dto) {
         Moto moto = motoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada: " + id));
 
-        if (dto.getStatus() == StatusMoto.INATIVADA) {
-            throw new IllegalArgumentException("Status INATIVADA só via exclusão.");
-        }
-        if (dto.getVagaId() == null) {
-            throw new IllegalArgumentException("Selecione uma vaga para a moto.");
+        if (!authz.isAdmin()) {
+            UUID userPatio = authz.currentUserPatioIdOrNull();
+            UUID vagaAtualId = moto.getVagaId();
+            if (vagaAtualId != null) {
+                Vaga vagaAtual = vagaRepository.findById(vagaAtualId)
+                        .orElseThrow(() -> new EntityNotFoundException("Vaga atual não encontrada: " + vagaAtualId));
+                if (vagaAtual.getPatio() == null || !userPatio.equals(vagaAtual.getPatio().getId())) {
+                    throw new SecurityException("Operador não pode atualizar moto de outro pátio.");
+                }
+            }
+
+            if (dto.getVagaId() != null) {
+                Vaga nova = vagaRepository.findById(dto.getVagaId())
+                        .orElseThrow(() -> new EntityNotFoundException("Vaga informada não encontrada: " + dto.getVagaId()));
+                if (nova.getPatio() == null || !userPatio.equals(nova.getPatio().getId())) {
+                    throw new SecurityException("Operador só pode mover moto dentro do próprio pátio.");
+                }
+            }
         }
 
-        moverMotoDePara(moto, dto.getVagaId());  // garante ordem correta
+        ajustarVagasSeNecessario(moto, dto.getVagaId());
+
+        moto.setPlaca(dto.getPlaca());
         moto.setStatus(dto.getStatus());
-        return MotoMapper.toDto(motoRepository.save(moto));
+
+        Moto saved = motoRepository.save(moto);
+        return MotoMapper.toDto(saved);
     }
 
-    // Delete
     @Transactional
-    @Caching(
-            put = { @CachePut(cacheNames="motosById", key="#result.id") },
-            evict = {
-                    @CacheEvict(cacheNames="motosList", allEntries=true),
-                    @CacheEvict(cacheNames="motosListAtivas", allEntries=true)
-            }
-    ) // limpa o cache da moto; a lista será recarregada
+    @Caching(evict = {
+            @CacheEvict(cacheNames="motosById", key="#id"),
+            @CacheEvict(cacheNames="motosList", allEntries=true),
+            @CacheEvict(cacheNames="motosListAtivas", allEntries=true)
+    })
     public void inativarMoto(UUID id) {
-        var moto = motoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada"));
-
-        UUID vagaAtualId = moto.getVagaId();
-
-        // solta a vaga atual (se houver)
-        if (vagaAtualId != null) {
-            vagaRepository.findById(vagaAtualId).ifPresent(v -> {
-                v.setMoto(null);
-                v.setStatus(StatusVaga.LIVRE);
-                vagaRepository.save(v);
-            });
+        Moto moto = readMotoByIdEntity(id);
+        moto.setStatus(StatusMoto.INATIVADA);
+        if (moto.getVagaId() != null) {
+            Vaga vaga = vagaRepository.findById(moto.getVagaId())
+                    .orElse(null);
+            if (vaga != null) {
+                vaga.setMoto(null);
+                vaga.setStatus(StatusVaga.LIVRE);
+                vagaRepository.save(vaga);
+            }
             moto.setVagaId(null);
         }
-
-        // marca a moto como inativada
-        moto.setStatus(StatusMoto.INATIVADA);
         motoRepository.save(moto);
     }
 
+    @Transactional(readOnly = true)
     public Moto readByPlaca(String placa) {
-        return motoRepository.findByPlacaIgnoreCase(placa);
+        Optional<Moto> opt = motoRepository.findByPlaca(placa);
+        Moto moto = opt.orElseThrow(() -> new EntityNotFoundException("Moto não encontrada pela placa: " + placa));
+
+        if (authz.isAdmin()) return moto;
+
+        UUID userPatio = authz.currentUserPatioIdOrThrow();
+        UUID vagaId = moto.getVagaId();
+        if (vagaId == null) throw new SecurityException("Moto sem vaga atual não é visível ao operador.");
+        Vaga vaga = vagaRepository.findById(vagaId)
+                .orElseThrow(() -> new EntityNotFoundException("Vaga da moto não encontrada: " + vagaId));
+        if (vaga.getPatio() == null || !userPatio.equals(vaga.getPatio().getId())) {
+            throw new SecurityException("Acesso negado: moto pertence a outro pátio.");
+        }
+        return moto;
     }
 
-    // MotoService.java
-    @Cacheable(cacheNames = "motosListAtivas",
-            key = "T(java.lang.String).format('%s_%s_%s', #pageable.pageNumber, #pageable.pageSize, #pageable.sort)")
+    @Transactional(readOnly = true)
+    @Cacheable(
+            cacheNames="motosListAtivas",
+            key="(#pageable != null && #pageable.isPaged()) ? \n" +
+                    "        (#pageable.pageNumber + ':' + #pageable.pageSize + ':' + (#pageable.sort != null ? #pageable.sort : 'UNSORTED')) \n" +
+                    "        : 'UNPAGED'",
+            condition="@authz.isAdmin()"
+    )
     public Page<MotoDTO> readAllMotosAtivas(Pageable pageable) {
-        var page = motoRepository.findByStatusNot(StatusMoto.INATIVADA, pageable);
-        var dtoList = page.getContent().stream().map(MotoMapper::toDto).toList();
-        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
+        if (authz.isAdmin()) {
+            Page<Moto> page = motoRepository.findAllByStatus(StatusMoto.DISPONIVEL, pageable);
+            Map<UUID, String> idToIdent = loadVagaIdentificacao(page.getContent());
+            List<MotoDTO> content = page.getContent()
+                    .stream()
+                    .map(m -> MotoMapper.toDto(m, idToIdent.get(m.getVagaId())))
+                    .toList();
+            return new PageImpl<>(content, pageable, page.getTotalElements());
+        }
+
+        UUID patioId = authz.currentUserPatioIdOrThrow();
+        List<UUID> vagaIds = vagaRepository.findAllIdsByPatioId(patioId);
+        if (vagaIds.isEmpty()) return Page.empty(pageable);
+
+        Page<Moto> page = motoRepository.findAllByStatusAndVagaIdIn(StatusMoto.DISPONIVEL, vagaIds, pageable);
+        Map<UUID, String> idToIdent = loadVagaIdentificacao(page.getContent());
+        List<MotoDTO> content = page.getContent()
+                .stream()
+                .map(m -> MotoMapper.toDto(m, idToIdent.get(m.getVagaId())))
+                .toList();
+        return new PageImpl<>(content, pageable, page.getTotalElements());
     }
 
+    @Transactional(readOnly = true)
     public MotoDTO readByPlacaDto(String placa) {
-        var moto = motoRepository.findByPlacaIgnoreCase(placa);
-        if (moto == null) return null;
-        String ident = null;
-        if (moto.getVagaId() != null) {
-            ident = vagaRepository.findById(moto.getVagaId())
-                    .map(Vaga::getIdentificacao).orElse(null);
-        }
-        return MotoMapper.toDto(moto, ident);
+        return MotoMapper.toDto(readByPlaca(placa));
     }
 
-    private void moverMotoDePara(Moto moto, UUID novaVagaId) {
-        UUID antigaId = moto.getVagaId();
-
-        // Se não mudou de vaga, só garante consistência
-        if (java.util.Objects.equals(antigaId, novaVagaId)) {
-            Vaga mesma = vagaRepository.findById(novaVagaId)
-                    .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada"));
-            if (mesma.getMoto() == null) {
-                mesma.setMoto(moto);
-                mesma.setStatus(StatusVaga.OCUPADA);
-                vagaRepository.save(mesma);
-            }
-            return;
-        }
-
-        // 1) Libera a vaga antiga e FLUSH (evita ORA-00001 na UNIQUE(moto_id))
-        if (antigaId != null) {
-            Vaga antiga = vagaRepository.findById(antigaId).orElse(null);
-            if (antiga != null && (antiga.getMoto() == null
-                    || antiga.getMoto().getId().equals(moto.getId()))) {
-                antiga.setMoto(null);
-                antiga.setStatus(StatusVaga.LIVRE);
-                vagaRepository.save(antiga);
-                vagaRepository.flush();   // <-- importante
-            }
-        }
-
-        // 2) Ocupa a nova
-        Vaga nova = vagaRepository.findById(novaVagaId)
-                .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada"));
-
-        if (nova.getMoto() != null && !nova.getMoto().getId().equals(moto.getId())) {
-            throw new IllegalStateException("Vaga já está ocupada.");
-        }
-        nova.setMoto(moto);
-        nova.setStatus(StatusVaga.OCUPADA);
-        vagaRepository.save(nova);
-
-        moto.setVagaId(nova.getId());
+    private Map<UUID, String> loadVagaIdentificacao(List<Moto> motos) {
+        Set<UUID> vagaIds = motos.stream()
+                .map(Moto::getVagaId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (vagaIds.isEmpty()) return Collections.emptyMap();
+        return vagaRepository.findIdentificacoesByIds(vagaIds);
     }
 
+    private void ajustarVagasSeNecessario(Moto moto, UUID novaVagaId) {
+        UUID vagaAntigaId = moto.getVagaId();
+        if (Objects.equals(vagaAntigaId, novaVagaId)) return;
+
+        if (vagaAntigaId != null) {
+            Vaga antiga = vagaRepository.findById(vagaAntigaId)
+                    .orElseThrow(() -> new EntityNotFoundException("Vaga antiga não encontrada: " + vagaAntigaId));
+            antiga.setMoto(null);
+            antiga.setStatus(StatusVaga.LIVRE);
+            vagaRepository.save(antiga);
+        }
+
+        if (novaVagaId != null) {
+            Vaga nova = vagaRepository.findById(novaVagaId)
+                    .orElseThrow(() -> new EntityNotFoundException("Vaga nova não encontrada: " + novaVagaId));
+            if (nova.getStatus() == StatusVaga.OCUPADA) {
+                throw new IllegalStateException("Vaga já está ocupada.");
+            }
+            nova.setMoto(moto);
+            nova.setStatus(StatusVaga.OCUPADA);
+            vagaRepository.save(nova);
+            moto.setVagaId(novaVagaId);
+        } else {
+            moto.setVagaId(null);
+        }
+
+    }
 
 }
 

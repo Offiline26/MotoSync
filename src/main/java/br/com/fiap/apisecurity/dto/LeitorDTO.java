@@ -15,8 +15,6 @@ public class LeitorDTO {
     @NotNull(message = "O ID do pátio é obrigatório")
     private UUID patioId;
 
-    // A vagaId pode ser null, dependendo do tipo
-
     private UUID vagaId;
 
     public LeitorDTO() {}

@@ -35,14 +35,11 @@ public class VagaController {
 
     @GetMapping("/{id}")
     public ResponseEntity<VagaDTO> getVagaById(@PathVariable UUID id) {
-        // Recupera a entidade Vaga
         Vaga vaga = vagaService.readVagaById(id);
         if (vaga == null) return ResponseEntity.notFound().build();
 
-        // Converte a entidade Vaga para VagaDTO
         VagaDTO vagaDTO = VagaMapper.toDto(vaga);
 
-        // Retorna o DTO
         return ResponseEntity.ok(vagaDTO);
     }
 

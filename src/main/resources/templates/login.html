@@ -2,9 +2,6 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/_head :: head('Login')}"></head>
 <body>
-<!-- Inclui a navbar apenas se houver usuário autenticado -->
-<header th:if="${#request?.userPrincipal != null}"
-        th:replace="~{fragments/_navbar :: navbar}"></header>
 
 <main class="container">
     <div class="header">
@@ -21,30 +18,20 @@
 
     <!-- IMPORTANTE: os names DEVEM ser 'email' e 'password' -->
     <form th:action="@{/login}" method="post">
+        <input type="text"     name="username" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Senha"   required>
+
+        <!-- CSRF oculto: ESSENCIAL -->
         <input type="hidden" th:if="${_csrf != null}"
                th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-        <label>E-mail
-            <input type="email" name="email" required autocomplete="username" autofocus />
-        </label>
-
-        <label>Senha
-            <input type="password" name="password" required autocomplete="current-password"/>
-        </label>
-
-        <div class="actions">
-            <button class="btn btn-primary" type="submit">Entrar</button>
-        </div>
+        <button type="submit">Entrar</button>
     </form>
 
     <div class="oauth-login">
         <h3>Ou faça login com:</h3>
-        <a href="https://motosync.onrender.com/login/oauth2/code/google" class="btn btn-google">
-            Login com Google
-        </a>
-        <a href="https://motosync.onrender.com/login/oauth2/code/github" class="btn btn-github">
-            Login com GitHub
-        </a>
+        <p><a th:href="@{/oauth2/authorization/github}">Continuar com GitHub</a></p>
+        <p><a th:href="@{/oauth2/authorization/google}">Continuar com Google</a></p>
     </div>
 </main>
 </body>

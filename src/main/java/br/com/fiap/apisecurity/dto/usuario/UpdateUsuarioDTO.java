@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+// Á SER FINALIZADA
+
 public class UpdateUsuarioDTO {
 
     @NotBlank(message = "O e-mail é obrigatório.")
@@ -15,12 +17,10 @@ public class UpdateUsuarioDTO {
 
     @NotBlank(message = "A senha é obrigatória.")
     @Size(min = 6, message = "A senha deve ter pelo menos 6 caracteres.")
-    // Obrigatório para qualquer alteração: confirmar senha atual
     private String senhaAtual;
 
     @NotBlank(message = "A senha é obrigatória.")
     @Size(min = 6, message = "A senha deve ter pelo menos 6 caracteres.")
-    // Opcional: nova senha
     private String novaSenha;
 
     @NotNull(message = "O cargo do usuário é obrigatório.")

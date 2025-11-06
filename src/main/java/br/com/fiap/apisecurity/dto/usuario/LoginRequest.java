@@ -1,10 +1,7 @@
 package br.com.fiap.apisecurity.dto.usuario;
 
-import jakarta.validation.constraints.NotBlank;
-
-
 public class LoginRequest {
-    private String email; // nomeUsuario
+    private String email;
     private String password;
 
     public String getEmail() { return email; }

@@ -69,7 +69,6 @@ public class PatioViewController {
         return "patio/form";
     }
 
-    // PUT real — o HiddenHttpMethodFilter converterá o POST + _method=put do form
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public String atualizar(@PathVariable UUID id,
@@ -85,7 +84,6 @@ public class PatioViewController {
         }
     }
 
-    // DELETE real — idem (POST + _method=delete nos templates)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public RedirectView excluir(@PathVariable UUID id, RedirectAttributes ra) {

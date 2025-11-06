@@ -10,7 +10,6 @@ public final class PatioMapper {
 
     private PatioMapper() {}
 
-    // Converte de Entidade para DTO
     public static PatioDTO toDto(Patio patio) {
         if (patio == null) return null;
         return new PatioDTO(
@@ -25,7 +24,6 @@ public final class PatioMapper {
         );
     }
 
-    // Converte de DTO para Entidade
     public static Patio toEntity(PatioDTO dto) {
         if (dto == null) return null;
         Patio patio = new Patio();
@@ -40,7 +38,18 @@ public final class PatioMapper {
         return patio;
     }
 
-    // Converte uma lista de entidades para DTOs
+    public static void apply(PatioDTO dto, Patio target) {
+        if (dto == null || target == null) return;
+
+        if (dto.getNome()   != null) target.setNome(dto.getNome());
+        if (dto.getRua()    != null) target.setRua(dto.getRua());
+        if (dto.getNumero() != null) target.setNumero(dto.getNumero());
+        if (dto.getBairro() != null) target.setBairro(dto.getBairro());
+        if (dto.getCidade() != null) target.setCidade(dto.getCidade());
+        if (dto.getEstado() != null) target.setEstado(dto.getEstado());
+        if (dto.getPais()   != null) target.setPais(dto.getPais());
+    }
+
     public static List<PatioDTO> toDtoList(List<Patio> patios) {
         return patios.stream()
                 .map(PatioMapper::toDto)

@@ -1,16 +1,21 @@
 package br.com.fiap.apisecurity.service.usuario;
 
+import br.com.fiap.apisecurity.controller.usuario.Authz;
 import br.com.fiap.apisecurity.dto.usuario.RegisterRequest;
 import br.com.fiap.apisecurity.dto.usuario.UsuarioPerfilResponse;
+import br.com.fiap.apisecurity.model.Patio;
 import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 import br.com.fiap.apisecurity.model.usuarios.Usuario;
 import br.com.fiap.apisecurity.repository.UsuarioRepository;
+import br.com.fiap.apisecurity.service.PatioService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -18,25 +23,76 @@ public class UsuarioService {
 
     private final UsuarioRepository repo;
     private final PasswordEncoder encoder;
+    private final PatioService patioService;
+    private final Authz authz;
 
-    public UsuarioService(UsuarioRepository repo, PasswordEncoder encoder) {
+    public UsuarioService(UsuarioRepository repo,
+                          PasswordEncoder encoder,
+                          PatioService patioService,
+                          Authz authz) {
         this.repo = repo;
         this.encoder = encoder;
+        this.patioService = patioService;
+        this.authz = authz;
     }
 
     @Transactional
     public UUID register(RegisterRequest req) {
-        String email = req.getEmail().trim().toLowerCase(Locale.ROOT);
+
+        if (req == null) {
+            throw new IllegalArgumentException("Dados de registro ausentes.");
+        }
+        final String email = Optional.ofNullable(req.getEmail())
+                .map(e -> e.trim().toLowerCase(Locale.ROOT))
+                .orElse("");
+        if (email.isEmpty()) {
+            throw new IllegalArgumentException("Informe um e-mail.");
+        }
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Informe uma senha.");
+        }
+
+
         if (repo.findByEmail(email).isPresent()) {
             throw new DataIntegrityViolationException("E-mail já cadastrado");
         }
-        Usuario u = new Usuario();
+
+
+        boolean adminAutenticado;
+        try {
+            adminAutenticado = authz.isAdmin();
+        } catch (SecurityException ex) {
+            adminAutenticado = false;
+        }
+
+        final CargoUsuario cargoEfetivo = adminAutenticado
+                ? Optional.ofNullable(req.getCargo()).orElse(CargoUsuario.OPERADOR_PATIO)
+                : CargoUsuario.OPERADOR_PATIO;
+
+
+        final Usuario u = new Usuario();
         u.setEmail(email);
         u.setSenha(encoder.encode(req.getPassword()));
-        u.setCargo(req.getCargo() != null ? req.getCargo() : CargoUsuario.OPERADOR_PATIO);
-        u = repo.save(u);
-        return u.getId();
+        u.setCargo(cargoEfetivo);
+
+
+        if (cargoEfetivo == CargoUsuario.OPERADOR_PATIO) {
+            final UUID patioId = req.getPatioId();
+            if (patioId == null) {
+                throw new IllegalArgumentException("Selecione o pátio onde o operador atua.");
+            }
+            final Patio patio = patioService.findById(patioId)
+                    .orElseThrow(() -> new EntityNotFoundException("Pátio não encontrado: " + patioId));
+            u.setPatio(patio);
+        } else {
+
+            u.setPatio(null);
+        }
+
+
+        return repo.save(u).getId();
     }
+
 
     public Usuario requireByEmail(String email) {
         return repo.findByEmail(email.trim().toLowerCase(Locale.ROOT))
@@ -44,10 +100,22 @@ public class UsuarioService {
     }
 
     public UsuarioPerfilResponse montarPerfilParaFrontend(Usuario usuario) {
+        var patio = usuario.getPatio();
         return new UsuarioPerfilResponse(
                 usuario.getId() != null ? usuario.getId().toString() : null,
                 usuario.getEmail(),
-                usuario.getCargo()
+                usuario.getCargo(),
+                patio != null ? patio.getId() : null,
+                patio != null ? patio.getNome() : null
         );
     }
+
+    private UUID parseUuid(String raw) {
+        try {
+            return UUID.fromString(raw.trim());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Identificador de pátio inválido.");
+        }
+    }
+
 }

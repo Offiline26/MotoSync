@@ -87,21 +87,36 @@ public class MotoViewController {
 
     @GetMapping("/{id}/editar")
     @PreAuthorize("hasRole('ADMIN')")
-    public String editar(@PathVariable UUID id, Model model, RedirectAttributes ra) {
+    public String editar(
+            @PathVariable UUID id,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            Model model,
+            RedirectAttributes ra) {
 
         var form = motoService.readMotoById(id);
-        if (form == null) { ra.addFlashAttribute("error","Moto não encontrada"); return "redirect:/motos"; }
+        if (form == null) {
+            ra.addFlashAttribute("error","Moto não encontrada");
+            return "redirect:/motos";
+        }
 
         var todas = vagaService.readAllVagas(Pageable.unpaged()).getContent();
         var vagaAtualId = form.getVagaId();
         var vagas = todas.stream()
                 .filter(v -> v.getMoto() == null || java.util.Objects.equals(v.getId(), vagaAtualId))
-                .sorted(java.util.Comparator.comparing(v -> java.util.Optional.ofNullable(v.getIdentificacao()).orElse(v.getId().toString())))
+                .sorted(java.util.Comparator.comparing(
+                        v -> java.util.Optional.ofNullable(v.getIdentificacao()).orElse(v.getId().toString())))
                 .toList();
 
         model.addAttribute("form", form);
         model.addAttribute("vagas", vagas);
-        return "moto/form";
+
+        // só adiciona se tiver parâmetros; evita NPE e funciona bem com o template
+        if (page != null && size != null) {
+            model.addAttribute("pageable", org.springframework.data.domain.PageRequest.of(page, size));
+        }
+
+        return "moto/form"; // ajuste o path se seu template estiver em "motos/form"
     }
 
     @PutMapping("/{id}")

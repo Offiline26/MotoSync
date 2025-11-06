@@ -1,5 +1,6 @@
 package br.com.fiap.apisecurity.model.usuarios;
 
+import br.com.fiap.apisecurity.model.Patio;
 import br.com.fiap.apisecurity.model.enums.CargoUsuario;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -16,7 +17,7 @@ public class Usuario {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @JdbcTypeCode(SqlTypes.BINARY)                   // RAW(16)
+    @JdbcTypeCode(SqlTypes.BINARY)
     @Column(name = "id")
     private UUID id;
 
@@ -28,11 +29,23 @@ public class Usuario {
     @Column(nullable = false, length = 255)
     private String senha;
 
-    @Enumerated(EnumType.STRING)                     // VARCHAR2(50)
+    @Enumerated(EnumType.STRING)
     @Column( nullable = false, length = 50)
     private CargoUsuario cargo = CargoUsuario.OPERADOR_PATIO;
 
-    // getters/setters
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patio_id")
+    private Patio patio;
+
+    public Patio getPatio() {
+        return patio;
+    }
+
+    public void setPatio(Patio patio) {
+        this.patio = patio;
+    }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getEmail() { return email; }
