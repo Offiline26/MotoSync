@@ -20,12 +20,10 @@ import java.util.UUID;
 public class VagaController {
 
     private final VagaService vagaService;
-    private final PatioService patioService;
 
     @Autowired
-    public VagaController(VagaService vagaService, PatioService patioService) {
+    public VagaController(VagaService vagaService) {
         this.vagaService = vagaService;
-        this.patioService = patioService;
     }
 
     @GetMapping

@@ -19,8 +19,6 @@ public final class VagaMapper {
 
         VagaDTO dto = new VagaDTO();
         dto.setId(vaga.getId());
-        dto.setCoordenadaLat(vaga.getCoordenadaLat());
-        dto.setCoordenadaLong(vaga.getCoordenadaLong());
         dto.setStatus(vaga.getStatus());
         dto.setIdentificacao(vaga.getIdentificacao());
 
@@ -37,8 +35,6 @@ public final class VagaMapper {
         if (dto == null) return null;
         Vaga vaga = new Vaga();
         vaga.setId(dto.getId());
-        vaga.setCoordenadaLat(dto.getCoordenadaLat());
-        vaga.setCoordenadaLong(dto.getCoordenadaLong());
         vaga.setStatus(dto.getStatus());
         vaga.setIdentificacao(dto.getIdentificacao());
         return vaga;
@@ -50,8 +46,6 @@ public final class VagaMapper {
 
     public static void apply(VagaDTO dto, Vaga target) {
         if (dto == null || target == null) return;
-        if (dto.getCoordenadaLat()  != null) target.setCoordenadaLat(dto.getCoordenadaLat());
-        if (dto.getCoordenadaLong() != null) target.setCoordenadaLong(dto.getCoordenadaLong());
         if (dto.getStatus()         != null) target.setStatus(dto.getStatus());
         if (dto.getIdentificacao()  != null) target.setIdentificacao(dto.getIdentificacao());
     }

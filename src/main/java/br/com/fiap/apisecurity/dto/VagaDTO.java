@@ -12,16 +12,6 @@ public class VagaDTO {
 
     private UUID id;
 
-    @NotNull(message = "A coordenada de latitude é obrigatória")
-    @DecimalMin(value = "-90.0", message = "Latitude mínima é -90")
-    @DecimalMax(value = "90.0", message = "Latitude máxima é 90")
-    private Double coordenadaLat;
-
-    @NotNull(message = "A coordenada de longitude é obrigatória")
-    @DecimalMin(value = "-180.0", message = "Longitude mínima é -180")
-    @DecimalMax(value = "180.0", message = "Longitude máxima é 180")
-    private Double coordenadaLong;
-
     @NotNull(message = "O status da vaga é obrigatório")
     private StatusVaga status;
 
@@ -38,11 +28,9 @@ public class VagaDTO {
 
     public VagaDTO() {}
 
-    public VagaDTO(UUID id, Double coordenadaLat, Double coordenadaLong, StatusVaga status,
+    public VagaDTO(UUID id, StatusVaga status,
                    UUID patioId, String patioNome, String identificacao, MotoDTO moto) {
         this.id = id;
-        this.coordenadaLat = coordenadaLat;
-        this.coordenadaLong = coordenadaLong;
         this.status = status;
         this.patioId = patioId;
         this.patioNome = patioNome;
@@ -52,12 +40,6 @@ public class VagaDTO {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
-
-    public Double getCoordenadaLat() { return coordenadaLat; }
-    public void setCoordenadaLat(Double coordenadaLat) { this.coordenadaLat = coordenadaLat; }
-
-    public Double getCoordenadaLong() { return coordenadaLong; }
-    public void setCoordenadaLong(Double coordenadaLong) { this.coordenadaLong = coordenadaLong; }
 
     public StatusVaga getStatus() { return status; }
     public void setStatus(StatusVaga status) { this.status = status; }

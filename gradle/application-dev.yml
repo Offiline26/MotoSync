@@ -1,18 +1,16 @@
+# application-dev.yml
 spring:
   datasource:
-    url: jdbc:oracle:thin:@//<host>:<port>/<service_name>
-    username: ${DB_USER}
-    password: ${DB_PASS}
-    driver-class-name: oracle.jdbc.OracleDriver  # evita "driver undefined/unknown"
+    url: jdbc:h2:mem:motosyncdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
   jpa:
     hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate.hbm2ddl.auto: validate
-      jakarta.persistence.schema-generation.database.action: none
-      hibernate.dialect: org.hibernate.dialect.OracleDialect
-
-  spring:
-    sql:
-      init:
-        mode: never
+      ddl-auto: update
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  kafka:
+    bootstrap-servers: kafka:9092

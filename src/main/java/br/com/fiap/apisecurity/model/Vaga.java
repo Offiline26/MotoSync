@@ -12,9 +12,6 @@ public class Vaga {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private Double coordenadaLat;
-    private Double coordenadaLong;
-
     @Column(name = "identificacao", length = 20)
     private String identificacao;
 
@@ -36,28 +33,12 @@ public class Vaga {
         this.id = id;
     }
 
-    public Double getCoordenadaLat() {
-        return coordenadaLat;
-    }
-
-    public void setCoordenadaLat(Double coordenadaLat) {
-        this.coordenadaLat = coordenadaLat;
-    }
-
-    public Double getCoordenadaLong() {
-        return coordenadaLong;
-    }
-
     public String getIdentificacao() {
         return identificacao;
     }
 
     public void setIdentificacao(String identificacao) {
         this.identificacao = identificacao;
-    }
-
-    public void setCoordenadaLong(Double coordenadaLong) {
-        this.coordenadaLong = coordenadaLong;
     }
 
     public StatusVaga getStatus() {
