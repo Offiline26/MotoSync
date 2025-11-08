@@ -15,7 +15,7 @@ COPY --from=build /usr/app/build/libs/api-security-0.0.1-SNAPSHOT.jar app.jar
 
 # Render usa a variável PORT, então não fixe porta aqui,
 # só exponha uma "default" qualquer (não é obrigatório, mas ajuda)
-EXPOSE 8080
+EXPOSE 8081
 
 # se quiser passar JAVA_OPTS depois
 ENV JAVA_OPTS=""
