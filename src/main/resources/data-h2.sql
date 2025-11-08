@@ -107,13 +107,6 @@ CREATE TABLE tb_registro (
 INSERT INTO tb_patio (nome, rua, numero, bairro, cidade, estado, pais)
 VALUES ('Pátio Central', 'Rua Principal', '123', 'Centro', 'São Paulo', 'SP', 'Brasil');
 
--- Moto exemplo, também vinculada ao pátio
-INSERT INTO tb_moto (placa, status)
-VALUES (
-           'ABC1D23',
-           'DISPONIVEL',
-       );
-
 -- Vaga livre no mesmo pátio
 INSERT INTO tb_vaga (status, patio_id, moto_id, identificacao)
 VALUES (
