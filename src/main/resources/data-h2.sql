@@ -108,7 +108,7 @@ INSERT INTO tb_patio (nome, rua, numero, bairro, cidade, estado, pais)
 VALUES ('Pátio Central', 'Rua Principal', '123', 'Centro', 'São Paulo', 'SP', 'Brasil');
 
 -- Usuário ADMIN vinculado ao pátio
-INSERT INTO tb_usuario (email, senha, cargo, patio_id)
+INSERT INTO tb_usuario (email, senha, cargo)
 VALUES (
            'admin@exemplo.com',
            'senha_segura',
@@ -116,11 +116,10 @@ VALUES (
        );
 
 -- Moto exemplo, também vinculada ao pátio
-INSERT INTO tb_moto (placa, status, patio_id)
+INSERT INTO tb_moto (placa, status)
 VALUES (
            'ABC1D23',
            'DISPONIVEL',
-           (SELECT id FROM tb_patio WHERE nome = 'Pátio Central')
        );
 
 -- Vaga livre no mesmo pátio
