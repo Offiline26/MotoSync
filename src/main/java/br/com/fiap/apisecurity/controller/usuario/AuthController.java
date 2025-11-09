@@ -42,7 +42,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.authz = authz;
     }
-
+// subindo
     @PostMapping("/login")
     public ResponseEntity<?> apiLogin(
             @RequestBody LoginRequest req,
