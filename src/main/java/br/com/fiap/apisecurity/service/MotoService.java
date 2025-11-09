@@ -4,6 +4,7 @@ import br.com.fiap.apisecurity.controller.usuario.Authz;
 import br.com.fiap.apisecurity.dto.MotoDTO;
 import br.com.fiap.apisecurity.mapper.MotoMapper;
 import br.com.fiap.apisecurity.model.Moto;
+import br.com.fiap.apisecurity.model.Patio;
 import br.com.fiap.apisecurity.model.Vaga;
 import br.com.fiap.apisecurity.model.enums.StatusMoto;
 import br.com.fiap.apisecurity.model.enums.StatusVaga;
@@ -216,20 +217,31 @@ public class MotoService {
             @CacheEvict(cacheNames="motosListAtivas", allEntries=true)
     })
     public void inativarMoto(UUID id) {
+
         Moto moto = readMotoByIdEntity(id);
         moto.setStatus(StatusMoto.INATIVADA);
-        if (moto.getVagaId() != null) {
-            Vaga vaga = vagaRepository.findById(moto.getVagaId())
-                    .orElse(null);
-            if (vaga != null) {
-                vaga.setMoto(null);
-                vaga.setStatus(StatusVaga.LIVRE);
-                vagaRepository.save(vaga);
 
-                expoNotificationService.checkEmptyParkSendAlert(vaga.getId());
-            }
-            moto.setVagaId(null);
+        // 👉 Use a associação em vez de vagaId “solta”
+        Vaga vaga = null;
+        if (moto.getVagaId() != null) {
+            vaga = vagaRepository.findById(moto.getVagaId()).orElse(null);
         }
+        // se Moto tiver: private Vaga vaga;
+        if (vaga != null) {
+            Patio patio = vaga.getPatio();   // precisamos disso pro alerta
+
+            vaga.setMoto(null);
+            vaga.setStatus(StatusVaga.LIVRE);
+            vagaRepository.save(vaga);
+
+            moto.setVagaId(null);              // quebra a associação dos dois lados
+
+            // 👉 Agora sim, ID do PÁTIO
+            if (patio != null) {
+                expoNotificationService.checkEmptyParkSendAlert(patio.getId());
+            }
+        }
+
         motoRepository.save(moto);
     }
 
