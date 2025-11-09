@@ -178,11 +178,16 @@ public class MotoService {
             }
     )
     public MotoDTO updateMoto(UUID id, MotoDTO dto) {
+
+        // 1) Carrega a moto persistida
         Moto moto = motoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Moto não encontrada: " + id));
 
+        // 2) Regras de segurança para operador
         if (!authz.isAdmin()) {
             UUID userPatio = authz.currentUserPatioIdOrNull();
+
+            // Confere se a vaga atual da moto pertence ao pátio do operador
             UUID vagaAtualId = moto.getVagaId();
             if (vagaAtualId != null) {
                 Vaga vagaAtual = vagaRepository.findById(vagaAtualId)
@@ -192,6 +197,7 @@ public class MotoService {
                 }
             }
 
+            // Se foi informada nova vaga, confere se também é do mesmo pátio
             if (dto.getVagaId() != null) {
                 Vaga nova = vagaRepository.findById(dto.getVagaId())
                         .orElseThrow(() -> new EntityNotFoundException("Vaga informada não encontrada: " + dto.getVagaId()));
@@ -201,10 +207,16 @@ public class MotoService {
             }
         }
 
+        // 3) Ajusta vínculo de vaga (libera antiga, ocupa nova, dispara notificações)
         ajustarVagasSeNecessario(moto, dto.getVagaId());
 
-        moto.setPlaca(dto.getPlaca());
-        moto.setStatus(dto.getStatus());
+        // 4) Atualiza dados simples da moto
+        if (dto.getPlaca() != null) {
+            moto.setPlaca(dto.getPlaca().trim().toUpperCase());
+        }
+        if (dto.getStatus() != null) {
+            moto.setStatus(dto.getStatus());
+        }
 
         Moto saved = motoRepository.save(moto);
         return MotoMapper.toDto(saved);
@@ -310,35 +322,52 @@ public class MotoService {
     }
 
     private void ajustarVagasSeNecessario(Moto moto, UUID novaVagaId) {
+
         UUID vagaAntigaId = moto.getVagaId();
+
+        // Se nada mudou, não faz nada
         if (Objects.equals(vagaAntigaId, novaVagaId)) return;
 
+        // 1) Libera a vaga antiga, se existir
         if (vagaAntigaId != null) {
             Vaga antiga = vagaRepository.findById(vagaAntigaId)
                     .orElseThrow(() -> new EntityNotFoundException("Vaga antiga não encontrada: " + vagaAntigaId));
-            antiga.setMoto(null);
-            antiga.setStatus(StatusVaga.LIVRE);
+
+            Patio patioAntigo = antiga.getPatio();          // guarda o pátio pra notificação
+
+            antiga.setMoto(null);                           // tira o vínculo Moto <- Vaga
+            antiga.setStatus(StatusVaga.LIVRE);             // marca como livre
             vagaRepository.save(antiga);
 
-            expoNotificationService.checkEmptyParkSendAlert(antiga.getId());
+            if (patioAntigo != null) {
+                // notifica usando o ID do PÁTIO (não da vaga)
+                expoNotificationService.checkEmptyParkSendAlert(patioAntigo.getId());
+            }
         }
 
+        // 2) Se tem nova vaga → ocupa
         if (novaVagaId != null) {
             Vaga nova = vagaRepository.findById(novaVagaId)
                     .orElseThrow(() -> new EntityNotFoundException("Vaga nova não encontrada: " + novaVagaId));
-            if (nova.getStatus() == StatusVaga.OCUPADA) {
-                throw new IllegalStateException("Vaga já está ocupada.");
+
+            // Se já tiver outra moto lá, impede conflito
+            if (nova.getMoto() != null && !nova.getMoto().getId().equals(moto.getId())) {
+                throw new IllegalStateException("Vaga já está ocupada por outra moto.");
             }
-            nova.setMoto(moto);
+
+            nova.setMoto(moto);                              // Vaga passa a apontar pra essa moto
             nova.setStatus(StatusVaga.OCUPADA);
             vagaRepository.save(nova);
-            moto.setVagaId(novaVagaId);
 
-            expoNotificationService.checkEmptyParkSendAlert(nova.getId());
+            moto.setVagaId(novaVagaId);                      // Moto guarda o id da nova vaga
+
+            if (nova.getPatio() != null) {
+                expoNotificationService.checkEmptyParkSendAlert(nova.getPatio().getId());
+            }
         } else {
+            // Sem nova vaga → moto fica sem vaga
             moto.setVagaId(null);
         }
-
     }
 
 }
