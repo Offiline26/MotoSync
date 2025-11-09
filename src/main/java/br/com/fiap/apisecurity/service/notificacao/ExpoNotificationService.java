@@ -6,6 +6,7 @@ import br.com.fiap.apisecurity.model.usuarios.Usuario;
 import br.com.fiap.apisecurity.repository.PatioRepository;
 import br.com.fiap.apisecurity.repository.UsuarioRepository;
 import br.com.fiap.apisecurity.repository.VagaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -85,15 +86,20 @@ public class ExpoNotificationService {
      * Aqui você pode chamar esse método via agendamento, endpoint, etc.
      */
     public void checkEmptyParkSendAlert(UUID patioId) {
-        log.info("🔍 Verificando ocupação do pátio {}", patioId);
+        log.info("🔎 Verificando ocupação do pátio {}", patioId);
 
         long vagasLivres = vagaRepository.countByPatio_IdAndStatus(patioId, StatusVaga.LIVRE);
-         Patio patio = patioRepository.findById(patioId).orElseThrow(() -> new RuntimeException("Pátio não encontrado: " + patioId));
 
-         if (vagasLivres == 0) {
-             enviarNotificacaoParaPatio(patio,
-                     "Pátio lotado",
-                     "Não há mais vagas disponíveis no pátio " + patio.getNome());
-         }
+        Patio patio = patioRepository.findById(patioId)
+                .orElseThrow(() -> new EntityNotFoundException("Pátio não encontrado: " + patioId));
+
+        // se não houver vagas livres, dispara notificação
+        if (vagasLivres == 0) {
+            enviarNotificacaoParaPatio(
+                    patio,
+                    "Pátio lotado",
+                    "Não há mais vagas disponíveis no pátio " + patio.getNome()
+            );
+        }
     }
 }

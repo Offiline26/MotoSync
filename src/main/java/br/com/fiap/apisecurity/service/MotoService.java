@@ -53,37 +53,61 @@ public class MotoService {
     )
     public MotoDTO createMoto(MotoDTO dto) {
 
+        // 🔐 Regras de autorização continuam iguais
         if (!authz.isAdmin()) {
             UUID userPatio = authz.currentUserPatioIdOrThrow();
 
             if (dto.getVagaId() == null) {
                 throw new SecurityException("Operador só pode criar moto vinculada a Vaga do seu pátio.");
             }
+
             Vaga vaga = vagaRepository.findById(dto.getVagaId())
                     .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + dto.getVagaId()));
+
             if (vaga.getPatio() == null || !userPatio.equals(vaga.getPatio().getId())) {
                 throw new SecurityException("Operador só pode criar moto em vaga do próprio pátio.");
             }
         }
 
+        // 🎯 Converte o DTO em entidade
         Moto moto = MotoMapper.toEntity(dto);
-        if (moto.getVagaId() != null) {
-            Vaga vaga = vagaRepository.findById(moto.getVagaId())
-                    .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + moto.getVagaId()));
+
+        // Garante status inicial
+        moto.setStatus(StatusMoto.DISPONIVEL); // evita null e padroniza
+
+        Vaga vaga = null;
+
+        // ⚙️ Se vier vagaId, valida e deixa a vaga carregada
+        if (dto.getVagaId() != null) { // usar dto, não moto, é mais explícito
+            vaga = vagaRepository.findById(dto.getVagaId())
+                    .orElseThrow(() -> new EntityNotFoundException("Vaga não encontrada: " + dto.getVagaId()));
+
             if (vaga.getStatus() == StatusVaga.OCUPADA) {
                 throw new IllegalStateException("Vaga já está ocupada.");
             }
-            vaga.setMoto(moto);
+
+            // Se Moto tiver relação com Pátio, pode garantir consistência aqui:
+            // if (moto.getPatio() == null) {
+            //     moto.setPatio(vaga.getPatio()); // mantém moto no mesmo pátio da vaga
+            // }
+        }
+
+        // ✅ 1) SALVA A MOTO PRIMEIRO
+        Moto saved = motoRepository.save(moto); // agora é entidade managed/persistida
+
+        // ✅ 2) Depois vincula na vaga e salva a vaga
+        if (vaga != null) {
+            vaga.setMoto(saved);                // agora aponta para Moto persistida → evita TransientObjectException
             vaga.setStatus(StatusVaga.OCUPADA);
             vagaRepository.save(vaga);
 
-            expoNotificationService.checkEmptyParkSendAlert(vaga.getId());
+            // Notificação de ocupação / verificar se pátio ficou cheio, etc.
+            expoNotificationService.checkEmptyParkSendAlert(vaga.getPatio().getId());
         }
 
-        moto.setStatus(StatusMoto.DISPONIVEL);
-        Moto saved = motoRepository.save(moto);
         return MotoMapper.toDto(saved);
     }
+
 
     @Transactional(readOnly = true)
     @Cacheable(cacheNames="motosById", key="#id")
