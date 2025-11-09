@@ -41,6 +41,7 @@ CREATE TABLE tb_usuario (
 
 ALTER TABLE tb_usuario ADD COLUMN expo_push_token VARCHAR(255);
 
+
 -- TABELA MOTO
 CREATE TABLE tb_moto (
                          id        UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
@@ -116,4 +117,13 @@ VALUES (
            (SELECT id FROM tb_patio WHERE nome = 'Pátio Central'),
            NULL,
            'A02'
+       );
+
+INSERT INTO tb_usuario (id, email, senha, cargo, patio_id)
+VALUES (
+           RANDOM_UUID(),                                   -- gera UUID no H2
+           'admin@motosync.com',                           -- e-mail do admin
+           '$2b$10$mDn1QxWAF1esglWOvThEEurwjZ2V540nTbKd/lpPoQJsBwRIAEQxy', -- senha BCrypt (Admin@123)
+           'ADMIN',                                        -- cargo
+           NULL                                            -- admin não precisa de pátio
        );
