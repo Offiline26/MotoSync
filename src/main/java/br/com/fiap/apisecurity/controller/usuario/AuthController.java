@@ -18,6 +18,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -118,19 +122,25 @@ public class AuthController {
         return "register";
     }
 
-    private void carregarAtributosComunsDoRegister(Model model) {
-        // Sempre carrega a lista de pátios
-        model.addAttribute("patios", patioService.findAllEntities());
-
-        // 🔒 Garante que SEMPRE vai ter um boolean (true/false), nunca null
-        boolean isAdmin = false;                  // default = false
+    @PostMapping("/register/front")
+    public ResponseEntity<?> apiRegister(@RequestBody RegisterRequest req) {
         try {
-            isAdmin = authz.isAdmin();            // tenta descobrir se usuário logado é ADMIN
-        } catch (Exception ignored) {             // se der qualquer erro (sem usuário logado, etc.)
-            isAdmin = false;                      // força false ao invés de deixar null
-        }
+            UUID id = usuarioService.register(req);
 
-        model.addAttribute("isAdmin", isAdmin);   // Thymeleaf recebe sempre boolean, nunca null
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("id", id);
+            body.put("email", req.getEmail());
+            body.put("cargo", req.getCargo()); // se tiver no DTO
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(body);
+
+        } catch (DataIntegrityViolationException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "E-mail já cadastrado"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", ex.getMessage()));
+        }
     }
 
 }
