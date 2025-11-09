@@ -42,6 +42,7 @@ public class UsuarioService {
         if (req == null) {
             throw new IllegalArgumentException("Dados de registro ausentes.");
         }
+
         final String email = Optional.ofNullable(req.getEmail())
                 .map(e -> e.trim().toLowerCase(Locale.ROOT))
                 .orElse("");
@@ -52,30 +53,22 @@ public class UsuarioService {
             throw new IllegalArgumentException("Informe uma senha.");
         }
 
-
+        // impede e-mail duplicado
         if (repo.findByEmail(email).isPresent()) {
             throw new DataIntegrityViolationException("E-mail já cadastrado");
         }
 
-
-        boolean adminAutenticado;
-        try {
-            adminAutenticado = authz.isAdmin();
-        } catch (SecurityException ex) {
-            adminAutenticado = false;
-        }
-
-        final CargoUsuario cargoEfetivo = adminAutenticado
-                ? Optional.ofNullable(req.getCargo()).orElse(CargoUsuario.OPERADOR_PATIO)
-                : CargoUsuario.OPERADOR_PATIO;
-
+        // ✅ Agora o cargo vem DIRETO do formulário.
+        // Se vier null, assume OPERADOR_PATIO por padrão.
+        final CargoUsuario cargoEfetivo =
+                Optional.ofNullable(req.getCargo()).orElse(CargoUsuario.OPERADOR_PATIO);
 
         final Usuario u = new Usuario();
         u.setEmail(email);
         u.setSenha(encoder.encode(req.getPassword()));
         u.setCargo(cargoEfetivo);
 
-
+        // Operador precisa ter pátio; Admin não
         if (cargoEfetivo == CargoUsuario.OPERADOR_PATIO) {
             final UUID patioId = req.getPatioId();
             if (patioId == null) {
@@ -85,13 +78,13 @@ public class UsuarioService {
                     .orElseThrow(() -> new EntityNotFoundException("Pátio não encontrado: " + patioId));
             u.setPatio(patio);
         } else {
-
+            // ADMIN (ou outros cargos futuros) não ficam presos a um pátio
             u.setPatio(null);
         }
 
-
         return repo.save(u).getId();
     }
+
 
 
     public Usuario requireByEmail(String email) {
