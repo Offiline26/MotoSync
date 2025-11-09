@@ -9,6 +9,7 @@ import br.com.fiap.apisecurity.model.enums.StatusMoto;
 import br.com.fiap.apisecurity.model.enums.StatusVaga;
 import br.com.fiap.apisecurity.repository.MotoRepository;
 import br.com.fiap.apisecurity.repository.VagaRepository;
+import br.com.fiap.apisecurity.service.notificacao.ExpoNotificationService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,15 +29,18 @@ public class MotoService {
 
     private final MotoRepository motoRepository;
     private final VagaRepository vagaRepository;
+    private final ExpoNotificationService expoNotificationService;
     private final Authz authz;
 
     @Autowired
     public MotoService(MotoRepository motoRepository,
                        VagaRepository vagaRepository,
-                       Authz authz) {
+                       Authz authz,
+                       ExpoNotificationService expoNotificationService) {
         this.motoRepository = motoRepository;
         this.vagaRepository = vagaRepository;
         this.authz = authz;
+        this.expoNotificationService = expoNotificationService;
     }
 
     @Transactional
@@ -72,6 +76,8 @@ public class MotoService {
             vaga.setMoto(moto);
             vaga.setStatus(StatusVaga.OCUPADA);
             vagaRepository.save(vaga);
+
+            expoNotificationService.checkEmptyParkSendAlert(vaga.getId());
         }
 
         moto.setStatus(StatusMoto.DISPONIVEL);
@@ -195,6 +201,8 @@ public class MotoService {
                 vaga.setMoto(null);
                 vaga.setStatus(StatusVaga.LIVRE);
                 vagaRepository.save(vaga);
+
+                expoNotificationService.checkEmptyParkSendAlert(vaga.getId());
             }
             moto.setVagaId(null);
         }
@@ -275,6 +283,8 @@ public class MotoService {
             antiga.setMoto(null);
             antiga.setStatus(StatusVaga.LIVRE);
             vagaRepository.save(antiga);
+
+            expoNotificationService.checkEmptyParkSendAlert(antiga.getId());
         }
 
         if (novaVagaId != null) {
@@ -287,6 +297,8 @@ public class MotoService {
             nova.setStatus(StatusVaga.OCUPADA);
             vagaRepository.save(nova);
             moto.setVagaId(novaVagaId);
+
+            expoNotificationService.checkEmptyParkSendAlert(nova.getId());
         } else {
             moto.setVagaId(null);
         }

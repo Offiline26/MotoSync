@@ -48,14 +48,8 @@ public class Usuario {
         this.patio = patio;
     }
 
-    public String getExpoPushToken() {
-        return expoPushToken;
-    }
-
-    public void setExpoPushToken(String expoPushToken) {
-        this.expoPushToken = expoPushToken;
-    }
-
+    public String getExpoPushToken() { return expoPushToken;}
+    public void setExpoPushToken(String expoPushToken) { this.expoPushToken = expoPushToken;}
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getEmail() { return email; }
