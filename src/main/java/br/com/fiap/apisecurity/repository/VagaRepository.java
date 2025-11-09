@@ -18,6 +18,9 @@ public interface VagaRepository extends JpaRepository<Vaga, UUID> {
     List<Vaga> findAllByPatio_IdAndStatus(UUID patioId, StatusVaga status);
     long countByPatio_Id(UUID patioId);
 
+    // 👉 ESTE É O QUE FALTAVA
+    long countByPatio_IdAndStatus(UUID patioId, StatusVaga status);
+
     @Query("select v.id from Vaga v where v.patio.id = :patioId")
     List<UUID> findAllIdsByPatioId(@Param("patioId") UUID patioId);
 

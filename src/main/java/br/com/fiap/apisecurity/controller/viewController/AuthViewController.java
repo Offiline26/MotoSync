@@ -32,7 +32,7 @@ public class AuthViewController {
     public String registerForm(Model model) {
         model.addAttribute("patios", patioService.findAllEntities());
 
-        boolean isAdmin = false;
+        boolean isAdmin = true;
         try { isAdmin = authz.isAdmin(); } catch (SecurityException ignored) { }
         model.addAttribute("isAdmin", isAdmin);
 

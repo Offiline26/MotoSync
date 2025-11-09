@@ -39,6 +39,8 @@ CREATE TABLE tb_usuario (
                                 FOREIGN KEY (patio_id) REFERENCES tb_patio(id)
 );
 
+ALTER TABLE tb_usuario ADD COLUMN expo_push_token VARCHAR(255);
+
 -- TABELA MOTO
 CREATE TABLE tb_moto (
                          id        UUID DEFAULT RANDOM_UUID() PRIMARY KEY,

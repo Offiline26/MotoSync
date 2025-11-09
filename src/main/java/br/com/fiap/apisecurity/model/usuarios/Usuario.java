@@ -33,6 +33,8 @@ public class Usuario {
     @Column( nullable = false, length = 50)
     private CargoUsuario cargo = CargoUsuario.OPERADOR_PATIO;
 
+    @Column(name = "expo_push_token")
+    private String expoPushToken;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patio_id")
@@ -44,6 +46,14 @@ public class Usuario {
 
     public void setPatio(Patio patio) {
         this.patio = patio;
+    }
+
+    public String getExpoPushToken() {
+        return expoPushToken;
+    }
+
+    public void setExpoPushToken(String expoPushToken) {
+        this.expoPushToken = expoPushToken;
     }
 
     public UUID getId() { return id; }
