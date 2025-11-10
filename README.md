@@ -109,6 +109,7 @@ OPERADOR_PATIO: tudo filtrado pelo pátio do usuário (aplicado nos Services e R
 ## ▶️ Como Executar
 
 Rodar no Render (caso vá testar, demora um tempo para a API acordar): https://motosync-front.onrender.com/login
+ADMIN: admin@motosync.com / Admin@123
 
 1. Clone o projeto:
 
