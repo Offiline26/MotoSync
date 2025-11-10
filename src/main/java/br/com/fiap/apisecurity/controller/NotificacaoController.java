@@ -31,7 +31,6 @@ public class NotificacaoController {
         if (expoToken == null || expoToken.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-
         Usuario usuario = usuarioRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
