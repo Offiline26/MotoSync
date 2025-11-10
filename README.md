@@ -118,7 +118,7 @@ ADMIN: admin@motosync.com / Admin@123
 git clone https://github.com/Offiline26/MotoSync.git
 cd MotoSync
 
-utilizar a branch #pro-gui
+utilizar a branch #main-front
 ```
 A aplicação sobe em http://localhost:8081/login
 
