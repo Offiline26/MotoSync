@@ -20,7 +20,12 @@ A aplicação resolve o problema da desorganização de motos nos pátios da emp
 - **Spring Security + JWT**
 - **Spring Cache**
 - **Oracle SQL**
+- **Azure SQL**
 - **ThymeLeaf** (Para Testes)
+- **H2** (Para Testes)
+- **Render**
+- **Azure Devops**
+
 
 ---
 
